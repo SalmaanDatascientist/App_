@@ -570,10 +570,52 @@ elif st.session_state.page == "Contact":
                         except: st.error("Connection Error")
                     else: st.warning("Please fill details")
 
-# Footer
+ -----------------------------------------------------------------------------
+# FOOTER
+# -----------------------------------------------------------------------------
 st.write("")
-st.markdown("""
-<div style='text-align: center; color: rgba(255,255,255,0.5); padding: 20px;'>
-<p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
-</div>
-""", unsafe_allow_html=True)
+st.write("")
+with st.container(border=True):
+    # 1. CSS Animation Logic
+    st.markdown("""
+        <style>
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .animated-footer-text {
+            font-weight: 800;
+            font-size: 24px;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 2px;
+            /* The Color Gradient: Add more colors here if you want */
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 300%;
+            
+            /* Clip the background to the text */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; 
+            background-clip: text;
+            color: transparent;
+            
+            /* The Animation Speed */
+            animation: gradient-animation 10s ease infinite;
+        }
+        </style>
+        
+        <div class="animated-footer-text">
+            PRECISE • PASSIONATE • PROFESSIONAL
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # The Copyright Caption
+    st.markdown(
+        "<div style='text-align: center; color: gray; font-size: 12px; margin-top: 10px;'>"
+        "© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M. All Rights Reserved."
+        "</div>", 
+        unsafe_allow_html=True
+    )
+
