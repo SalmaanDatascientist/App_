@@ -817,38 +817,166 @@ elif st.session_state.page == "Bootcamp":
             st.markdown("📅 **Schedule:** Saturdays & Sundays")
             st.link_button("📱 Enroll Now", "https://wa.me/917339315376", use_container_width=True)
 
-# ==========================================
+==========================================
 # PAGE: CONTACT
 # ==========================================
 elif st.session_state.page == "Contact":
     st.markdown("# 📞 Get In Touch")
+    
     c1, c2 = st.columns([1, 1])
+    
     with c1:
         with st.container(border=True):
             st.markdown("### Contact Information")
-            st.markdown("**📱 Phone:** +91 73393 15376")
-            st.markdown("**✉️ Email:** the.molecularmanexpert@gmail.com")
-            st.link_button("💬 WhatsApp Us", "https://wa.me/917339315376", use_container_width=True)
+            st.write("")
+            
+            st.markdown("**📱 Phone**")
+            st.write("+91 73393 15376")
+            st.write("")
+            
+            st.markdown("**✉️ Email**")
+            st.markdown(
+                """
+                <div style="
+                    display: inline-block;
+                    background-color: #ffffff;
+                    padding: 10px 20px;
+                    border-radius: 25px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    border: 1px solid #e0e0e0;
+                ">
+                    <a href="mailto:the.molecularmanexpert@gmail.com" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px;">✉️</span>
+                        <span style="
+                            color: #333333 !important;
+                            font-weight: bold;
+                            font-size: 16px;
+                            font-family: sans-serif;
+                        ">
+                            the.molecularmanexpert@gmail.com
+                        </span>
+                    </a>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.write("")
+            
+            st.markdown("**🕒 Operating Hours**")
+            st.write("Monday - Saturday: 9:00 AM - 9:00 PM")
+            st.write("Sunday: Closed (AI Support Available 24/7)")
+            st.write("")
+            
+            st.link_button("💬 WhatsApp Us", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
+    
     with c2:
         with st.container(border=True):
             st.markdown("### Send us a Message")
-            with st.form("contact_page_form"):
-                name = st.text_input("Name")
-                phone = st.text_input("Phone")
-                msg = st.text_area("Message")
-                if st.form_submit_button("Send Message", use_container_width=True):
+            
+            # UNIQUE KEY for this form to prevent duplicate key errors
+            with st.form("contact_page_form_unique"):
+                name = st.text_input("Your Name")
+                phone = st.text_input("Phone Number")
+                email = st.text_input("Email (Optional)")
+                grade = st.selectbox("Student's Grade", 
+                    ["6-8", "9-10", "11-12 (Science)", "11-12 (Commerce)", "College/Other"])
+                message = st.text_area("Message", height=120)
+                
+                # CORRECTED INDENTATION: Button inside the form
+                submitted = st.form_submit_button("Send Message", use_container_width=True)
+
+                if submitted:
                     if name and phone:
                         try:
-                            url = "https://formsubmit.co/the.molecularmanexpert@gmail.com"
-                            requests.post(url, data={"name": name, "phone": phone, "message": msg, "_captcha": "false"})
-                            st.success("✅ Thank you! We'll contact you shortly.")
-                        except: st.error("Connection Error")
-                    else: st.warning("Please fill details")
+                            # 1. Prepare data
+                            form_data = {
+                                "name": name,
+                                "phone": phone,
+                                "email": email,
+                                "grade": grade,
+                                "message": message,
+                                "_subject": f"New Inquiry from {name}",
+                                "_captcha": "false"
+                            }
 
-# Footer
+                            # 2. Send to FormSubmit
+                            # URL is constructed safely by joining strings to guarantee no hidden spaces
+                            url = "https://" + "formsubmit.co/the.molecularmanexpert@gmail.com"
+                            response = requests.post(url, data=form_data)
+
+                            # 3. Success Message
+                            if response.status_code == 200:
+                                st.markdown(
+                                    """
+                                    <div style="
+                                        background-color: #a7e4d8; 
+                                        padding: 15px; 
+                                        border-radius: 10px; 
+                                        color: black; 
+                                        font-weight: bold; 
+                                        border: 1px solid #6ccec0;
+                                        margin-top: 10px;
+                                    ">
+                                        ✅ Thank you! We'll contact you within 24 hours.
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True
+                                )
+                                st.balloons()
+                            else:
+                                st.error("⚠️ Connection error. Please try again.")
+                        
+                        except Exception as e:
+                            st.error(f"⚠️ Error: {e}")
+
+                    else:
+                        st.warning("⚠️ Please fill in your name and phone number.")
+
+# -----------------------------------------------------------------------------
+# FOOTER
+# -----------------------------------------------------------------------------
 st.write("")
-st.markdown("""
-<div style='text-align: center; color: rgba(255,255,255,0.5); padding: 20px;'>
-<p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
-</div>
-""", unsafe_allow_html=True)
+st.write("")
+with st.container(border=True):
+    # 1. CSS Animation Logic
+    st.markdown("""
+        <style>
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .animated-footer-text {
+            font-weight: 800;
+            font-size: 24px;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 2px;
+            /* The Color Gradient: Add more colors here if you want */
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 300%;
+            
+            /* Clip the background to the text */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; 
+            background-clip: text;
+            color: transparent;
+            
+            /* The Animation Speed */
+            animation: gradient-animation 10s ease infinite;
+        }
+        </style>
+        
+        <div class="animated-footer-text">
+            PRECISE • PASSIONATE • PROFESSIONAL
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # The Copyright Caption
+    st.markdown(
+        "<div style='text-align: center; color: gray; font-size: 12px; margin-top: 10px;'>"
+        "© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M. All Rights Reserved."
+        "</div>", 
+        unsafe_allow_html=True
+    )
