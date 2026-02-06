@@ -31,6 +31,10 @@ st.set_page_config(
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
+# Set default user since auth is removed
+if "username" not in st.session_state:
+    st.session_state.username = "Student"
+
 # AI Tutor State
 if "aya_messages" not in st.session_state:
     st.session_state.aya_messages = []
@@ -40,7 +44,7 @@ if 'mt_questions' not in st.session_state: st.session_state.mt_questions = None
 if 'mt_answers' not in st.session_state: st.session_state.mt_answers = {}
 if 'mt_feedback' not in st.session_state: st.session_state.mt_feedback = None
 
-# Files (Only for notifications/live status now)
+# Files (Only keeping Notifications/Live Status)
 NOTIFICATIONS_FILE = "notifications.json"
 LIVE_STATUS_FILE = "live_status.json"
 
@@ -296,7 +300,7 @@ if st.session_state.page == "Home":
             st.write("")
             st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
-    # 2. DYNAMIC ADVERTISEMENT (REDESIGNED)
+    # 2. DYNAMIC ADVERTISEMENT (CUSTOM TEXT)
     st.markdown("""
     <div class="hero-ad-box">
         <div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
@@ -309,11 +313,11 @@ if st.session_state.page == "Home":
         <div class="hero-feature-grid">
             <div class="hero-feature-item">
                 <span style="font-size: 20px; color: #ffd700;">1. 🧠 AyA (AI Tutor)</span><br>
-                <span style="font-size: 16px; color: #ccc;">She doesn't sleep. She solves PDFs & problems instantly.</span>
+                <span style="font-size: 16px; color: #e0e0e0;">She doesn't sleep. She solves PDFs & problems instantly.</span>
             </div>
             <div class="hero-feature-item">
                 <span style="font-size: 20px; color: #ffd700;">2. 📝 Infinite Mock Tests</span><br>
-                <span style="font-size: 16px; color: #ccc;">Generate unlimited tests for ANY Board/Subject for ₹0.</span>
+                <span style="font-size: 16px; color: #e0e0e0;">Generate unlimited tests for ANY Board/Subject for ₹0.</span>
             </div>
         </div>
         
