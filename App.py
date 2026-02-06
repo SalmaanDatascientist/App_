@@ -161,20 +161,63 @@ div[data-testid="stFormSubmitButton"] > button p { color: #ffffff !important; }
     font-size: 14px; font-weight: 800; color: #ff4d4d; letter-spacing: 1.5px;
     border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px; margin-top: 10px;
 }
-/* Founder Header */
-.founder-header-container {
-    text-align: center; padding: 25px 15px; background: rgba(0, 0, 0, 0.2);
-    border-radius: 20px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.15);
+
+/* --- ANIMATED FOUNDER HEADER --- */
+@keyframes border-flow {
+    0% { border-color: #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
+    50% { border-color: #3a7bd5; box-shadow: 0 0 25px rgba(58, 123, 213, 0.5); }
+    100% { border-color: #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
 }
-.founder-headline { font-size: 2.2rem; font-weight: 900; color: #ffffff; margin-bottom: 12px; }
-.founder-subhead { font-size: 1.2rem; color: #e0f7fa; font-weight: 500; }
-.founder-tagline { color: #ffd700; font-style: italic; font-weight: 800; letter-spacing: 1.5px; }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translate3d(0, 20px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.founder-header-container {
+    text-align: center;
+    padding: 35px 20px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+    animation: border-flow 4s infinite alternate;
+}
+.founder-headline {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #ffffff, #a1c4fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+.founder-subhead {
+    font-size: 1.1rem;
+    color: #d1d5db;
+    margin-bottom: 15px;
+    font-weight: 400;
+    opacity: 0; /* Hidden initially */
+    animation: fadeInUp 0.8s ease-out 0.3s forwards; /* Delay */
+}
+.founder-tagline {
+    font-size: 0.95rem;
+    color: #ffd700;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0; /* Hidden initially */
+    animation: fadeInUp 0.8s ease-out 0.6s forwards; /* Delay */
+}
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # 5. NAVIGATION
 # -----------------------------------------------------------------------------
+# IMPORTANT: HTML strings are FLUSH LEFT to prevent code-block rendering
 st.markdown("""
 <div class="founder-header-container">
 <div class="founder-headline">Other Apps Were Coded by Engineers. This One Was Coded by Your Master Tutor - Mohammed Salmaan.</div>
@@ -236,7 +279,7 @@ if st.session_state.page == "Home":
             st.write("")
             st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
-    # 2. FIXED DYNAMIC ADVERTISEMENT (NO INDENTATION FOR HTML)
+    # 2. FIXED DYNAMIC ADVERTISEMENT (No Indentation for HTML content)
     st.markdown("""
 <div class="hero-ad-box">
 <div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
@@ -509,6 +552,7 @@ elif st.session_state.page == "Testimonials":
     st.markdown("# 💬 Student Success Stories")
     t1, t2 = st.columns(2)
     def testimonial_card(text, author):
+        # NOTE: Flush left HTML
         st.markdown(f"""
 <div style="background:white; padding:20px; border-radius:10px; border-left:5px solid #2c5282; margin-bottom:20px;">
 <div style="color:#333; font-style:italic;">"{text}"</div>
