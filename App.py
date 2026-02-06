@@ -97,6 +97,7 @@ def get_live_status():
 # -----------------------------------------------------------------------------
 # 4. CSS STYLING
 # -----------------------------------------------------------------------------
+# NOTE: The HTML inside st.markdown MUST be flush left to avoid code-block rendering
 st.markdown("""
 <style>
     .stApp {
@@ -174,11 +175,12 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 # 5. NAVIGATION
 # -----------------------------------------------------------------------------
+# IMPORTANT: HTML strings are FLUSH LEFT to prevent code-block rendering
 st.markdown("""
 <div class="founder-header-container">
-    <div class="founder-headline">Other Apps Were Coded by Engineers. This One Was Coded by Your Master Tutor - Mohammed Salmaan.</div>
-    <div class="founder-subhead">The only online tuition service in the world running on a proprietary engine built by the Founder.</div>
-    <div class="founder-tagline">Pure Teaching Intelligence. Zero Corporate Noise.</div>
+<div class="founder-headline">Other Apps Were Coded by Engineers. This One Was Coded by Your Master Tutor - Mohammed Salmaan.</div>
+<div class="founder-subhead">The only online tuition service in the world running on a proprietary engine built by the Founder.</div>
+<div class="founder-tagline">Pure Teaching Intelligence. Zero Corporate Noise.</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -235,30 +237,27 @@ if st.session_state.page == "Home":
             st.write("")
             st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
-    # 2. FIXED DYNAMIC ADVERTISEMENT (No Indentation)
+    # 2. FIXED DYNAMIC ADVERTISEMENT (No Indentation for HTML content)
     st.markdown("""
 <div class="hero-ad-box">
-    <div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
-    <div class="hero-subhead">
-        Stop paying for "premium" test series. The corporate coaching giants are scared.
-    </div>
-    
-    <div class="hero-suite-title">INTRODUCING: THE MOLECULAR MAN AI SUITE</div>
-    
-    <div class="hero-feature-grid">
-        <div class="hero-feature-item">
-            <span style="font-size: 20px; color: #ffd700;">1. 🧠 AyA (AI Tutor)</span><br>
-            <span style="font-size: 16px; color: #e0e0e0;">She doesn't sleep. She solves PDFs & problems instantly.</span>
-        </div>
-        <div class="hero-feature-item">
-            <span style="font-size: 20px; color: #ffd700;">2. 📝 Infinite Mock Tests</span><br>
-            <span style="font-size: 16px; color: #e0e0e0;">Generate unlimited tests for ANY Board/Subject for ₹0.</span>
-        </div>
-    </div>
-    
-    <div class="hero-footer">
-        🚫 NO SUBSCRIPTIONS. NO HIDDEN FEES. PURE TEACHING INTELLIGENCE.
-    </div>
+<div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
+<div class="hero-subhead">
+Stop paying for "premium" test series. The corporate coaching giants are scared.
+</div>
+<div class="hero-suite-title">INTRODUCING: THE MOLECULAR MAN AI SUITE</div>
+<div class="hero-feature-grid">
+<div class="hero-feature-item">
+<span style="font-size: 20px; color: #ffd700;">1. 🧠 AyA (AI Tutor)</span><br>
+<span style="font-size: 16px; color: #e0e0e0;">She doesn't sleep. She solves PDFs & problems instantly.</span>
+</div>
+<div class="hero-feature-item">
+<span style="font-size: 20px; color: #ffd700;">2. 📝 Infinite Mock Tests</span><br>
+<span style="font-size: 16px; color: #e0e0e0;">Generate unlimited tests for ANY Board/Subject for ₹0.</span>
+</div>
+</div>
+<div class="hero-footer">
+🚫 NO SUBSCRIPTIONS. NO HIDDEN FEES. PURE TEACHING INTELLIGENCE.
+</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -465,13 +464,13 @@ elif st.session_state.page == "Live Class":
     status = get_live_status()
     if status["is_live"]:
         st.markdown(f"""
-        <div style="background: rgba(255, 0, 0, 0.1); border: 2px solid red; padding: 30px; border-radius: 15px; text-align: center;">
-            <h1 style="color: #ff4444 !important;">🔴 LIVE NOW</h1>
-            <h2>Topic: {status['topic']}</h2>
-            <br>
-            <a href="{status['link']}" target="_blank" style="background:red;color:white;padding:10px 20px;border-radius:20px;text-decoration:none;">🎥 JOIN GOOGLE MEET</a>
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background: rgba(255, 0, 0, 0.1); border: 2px solid red; padding: 30px; border-radius: 15px; text-align: center;">
+<h1 style="color: #ff4444 !important;">🔴 LIVE NOW</h1>
+<h2>Topic: {status['topic']}</h2>
+<br>
+<a href="{status['link']}" target="_blank" style="background:red;color:white;padding:10px 20px;border-radius:20px;text-decoration:none;">🎥 JOIN GOOGLE MEET</a>
+</div>
+""", unsafe_allow_html=True)
     else:
         st.markdown("### 💤 Class is offline")
     
@@ -511,12 +510,13 @@ elif st.session_state.page == "Testimonials":
     st.markdown("# 💬 Student Success Stories")
     t1, t2 = st.columns(2)
     def testimonial_card(text, author):
+        # NOTE: Flush left HTML
         st.markdown(f"""
-        <div style="background:white; padding:20px; border-radius:10px; border-left:5px solid #2c5282; margin-bottom:20px;">
-            <div style="color:#333; font-style:italic;">"{text}"</div>
-            <div style="color:#2c5282; font-weight:bold; margin-top:10px; text-align:right;">- {author}</div>
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background:white; padding:20px; border-radius:10px; border-left:5px solid #2c5282; margin-bottom:20px;">
+<div style="color:#333; font-style:italic;">"{text}"</div>
+<div style="color:#2c5282; font-weight:bold; margin-top:10px; text-align:right;">- {author}</div>
+</div>
+""", unsafe_allow_html=True)
 
     with t1:
         testimonial_card("Sir's organic chemistry teaching helped me a lot!", "Pranav.S, Class 12")
@@ -573,7 +573,7 @@ elif st.session_state.page == "Contact":
 # Footer
 st.write("")
 st.markdown("""
-    <div style='text-align: center; color: rgba(255,255,255,0.5); padding: 20px;'>
-        <p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
-    </div>
+<div style='text-align: center; color: rgba(255,255,255,0.5); padding: 20px;'>
+<p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
+</div>
 """, unsafe_allow_html=True)
