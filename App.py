@@ -1,14 +1,12 @@
 import streamlit as st
 import os
 import json
-import uuid
-import datetime
-import requests
 import base64
-import PyPDF2
+import datetime
 from PIL import Image
 from groq import Groq
 from openai import OpenAI
+import PyPDF2
 
 # -----------------------------------------------------------------------------
 # 1. PAGE CONFIGURATION
@@ -31,7 +29,7 @@ st.set_page_config(
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
-# Set default user since auth is removed
+# Default user to Guest/Student since auth is removed
 if "username" not in st.session_state:
     st.session_state.username = "Student"
 
@@ -300,7 +298,7 @@ if st.session_state.page == "Home":
             st.write("")
             st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
-    # 2. DYNAMIC ADVERTISEMENT (CUSTOM TEXT)
+    # 2. DYNAMIC ADVERTISEMENT (INTEGRATED)
     st.markdown("""
     <div class="hero-ad-box">
         <div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
