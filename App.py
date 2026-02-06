@@ -4,17 +4,20 @@ import json
 import hashlib
 import uuid
 import datetime
-import requests  # Required for email functionality
+import requests
+import base64
+import PyPDF2
 from PIL import Image
+from groq import Groq
+from openai import OpenAI
 
 # -----------------------------------------------------------------------------
 # 1. PAGE CONFIGURATION
 # -----------------------------------------------------------------------------
-# Load the image safely
 try:
     im = Image.open("logo.png")
 except:
-    im = "🧪" # Fallback icon if image is missing
+    im = "🧪"
 
 st.set_page_config(
     page_title="The Molecular Man | Expert Tuition Solutions",
@@ -26,11 +29,9 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 # 2. SESSION STATE & FILE SETUP
 # -----------------------------------------------------------------------------
-# Navigation State
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
-# Auth State
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
@@ -40,13 +41,21 @@ if "is_admin" not in st.session_state:
 if "device_id" not in st.session_state:
     st.session_state.device_id = str(uuid.uuid4())
 
+# AI Tutor State
+if "aya_messages" not in st.session_state:
+    st.session_state.aya_messages = []
+
+# Mock Test State
+if 'mt_questions' not in st.session_state: st.session_state.mt_questions = None
+if 'mt_answers' not in st.session_state: st.session_state.mt_answers = {}
+if 'mt_feedback' not in st.session_state: st.session_state.mt_feedback = None
+
 # Files
 USERS_FILE = "users_database.json"
 SESSIONS_FILE = "active_sessions.json"
 NOTIFICATIONS_FILE = "notifications.json"
 LIVE_STATUS_FILE = "live_status.json"
 
-# Database Init Functions
 def create_users_db():
     if not os.path.exists(USERS_FILE):
         default_users = {
@@ -74,8 +83,6 @@ init_files()
 # -----------------------------------------------------------------------------
 # 3. HELPER FUNCTIONS
 # -----------------------------------------------------------------------------
-
-# --- Image Handling ---
 def get_image_path(filename_base):
     extensions = [".png", ".jpg", ".jpeg", ".webp", ".gif"]
     paths = [f"images/{filename_base}", f"assets/{filename_base}", filename_base, f"./{filename_base}"]
@@ -84,8 +91,6 @@ def get_image_path(filename_base):
             full_path = path + ext
             if os.path.exists(full_path):
                 return full_path
-            if os.path.exists(full_path.upper()):
-                return full_path.upper()
     return None
 
 def render_image(filename, caption=None, width=None, use_column_width=False):
@@ -101,7 +106,6 @@ def render_image(filename, caption=None, width=None, use_column_width=False):
     except:
         return False
 
-# --- Authentication & Data ---
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -142,145 +146,75 @@ def set_live_status(is_live, topic="", link=""):
         json.dump(status, f)
 
 # -----------------------------------------------------------------------------
-# 4. CSS STYLING & FOUNDER HEADER
+# 4. CSS STYLING
 # -----------------------------------------------------------------------------
 st.markdown("""
 <style>
-    /* 1. Reduce Top Padding */
+    /* Main Background Gradient */
+    .stApp {
+        background: linear-gradient(135deg, #4a90a4 0%, #6bb5c7 50%, #8fd4e3 100%) !important;
+    }
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 5rem !important;
     }
 
-    /* 2. Main Background Gradient */
-    .stApp {
-        background: linear-gradient(135deg, #4a90a4 0%, #6bb5c7 50%, #8fd4e3 100%) !important;
-    }
-    
-    /* 3. FOUNDER HEADER STYLES */
+    /* Founder Header */
     @keyframes flash-pulse {
         0% { opacity: 1; transform: scale(1); text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        50% { opacity: 0.85; transform: scale(1.01); text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5); }
+        50% { opacity: 0.85; transform: scale(1.01); text-shadow: 0 0 15px rgba(255, 255, 255, 0.8); }
         100% { opacity: 1; transform: scale(1); text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
     }
-    
     .founder-header-container {
-        text-align: center;
-        padding: 25px 15px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 20px;
-        margin-bottom: 25px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(5px);
+        text-align: center; padding: 25px 15px; background: rgba(0, 0, 0, 0.2);
+        border-radius: 20px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.15);
     }
-    
     .founder-headline {
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-size: 2.2rem;
-        font-weight: 900;
-        color: #ffffff;
-        margin-bottom: 12px;
-        line-height: 1.2;
+        font-size: 2.2rem; font-weight: 900; color: #ffffff; margin-bottom: 12px;
         animation: flash-pulse 2.5s infinite ease-in-out;
     }
-    
-    .founder-subhead {
-        font-size: 1.2rem;
-        color: #e0f7fa;
-        margin-bottom: 10px;
-        font-weight: 500;
-    }
-    
-    .founder-tagline {
-        font-size: 1.0rem;
-        color: #ffd700;
-        font-style: italic;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        margin-top: 5px;
-    }
+    .founder-subhead { font-size: 1.2rem; color: #e0f7fa; font-weight: 500; }
+    .founder-tagline { color: #ffd700; font-style: italic; font-weight: 800; letter-spacing: 1.5px; }
 
-    /* --- ANIMATED BUTTONS --- */
+    /* Button Styling */
     div.stButton > button {
         background: linear-gradient(90deg, #1e3a5f, #3b6b9e, #1e3a5f);
-        background-size: 200% auto;
-        color: white !important;
-        border-radius: 25px !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
-        padding: 10px 24px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        animation: gradient-move 3s linear infinite;
+        color: white !important; border-radius: 25px !important; border: 1px solid rgba(255,255,255,0.2) !important;
     }
-    @keyframes gradient-move {
-        0% { background-position: 0% 50%; }
-        100% { background-position: 200% 50%; }
-    }
-    div.stButton > button:hover {
-        transform: translateY(-5px) scale(1.05) !important;
-        box-shadow: 0 10px 20px rgba(30, 58, 95, 0.5), 0 0 15px rgba(255, 255, 255, 0.4) !important;
-        border-color: #ffffff !important;
-    }
-    div.stButton > button:active {
-        transform: scale(0.95) !important;
-    }
+    div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     
-    /* Live Class Pulse */
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
+    /* Submit Button Specific Fix */
+    div[data-testid="stFormSubmitButton"] > button {
+        background: #1e3a5f !important; color: #ffffff !important; border: 2px solid white !important;
     }
-    .live-join-btn {
-        background: linear-gradient(45deg, #00897b, #00bfa5);
-        color: white;
-        padding: 15px 30px;
-        border-radius: 50px;
-        text-decoration: none;
-        font-weight: bold;
-        display: inline-block;
-        animation: pulse 2s infinite;
-        text-align: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    .live-join-btn:hover {
-        color: white;
-        background: linear-gradient(45deg, #00695c, #00897b);
-    }
+    div[data-testid="stFormSubmitButton"] > button p { color: #ffffff !important; }
 
     /* Inputs */
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea, .stSelectbox > div > div {
-        background-color: rgba(255, 255, 255, 0.95) !important;
-        color: #333 !important;
-        border-radius: 8px;
-        border: 1px solid rgba(0,0,0,0.1);
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div {
+        background-color: rgba(255, 255, 255, 0.95) !important; color: #333 !important; border-radius: 8px;
     }
     
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: rgba(255,255,255,0.2);
-        border-radius: 10px 10px 0 0;
-        color: white;
+    /* Hide Menu */
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+    
+    /* Ad Banner Style */
+    .ad-banner {
+        background: linear-gradient(45deg, #000000, #1a1a1a);
+        border: 2px solid #ffd700;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 25px;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
     }
-    .stTabs [aria-selected="true"] {
-        background-color: #ffd700 !important;
-        color: black !important;
-    }
-
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    .ad-title { font-size: 24px; font-weight: 900; color: #ffd700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .ad-text { font-size: 16px; color: #ffffff; margin-bottom: 15px; line-height: 1.5; }
+    .ad-highlight { color: #00ff00; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 5. HEADER & NAVIGATION MENU
+# 5. NAVIGATION
 # -----------------------------------------------------------------------------
 
 st.markdown("""
@@ -291,9 +225,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Adjusted to 6 Columns (AI Tools Removed)
+# Navigation Menu
+st.markdown("### 🧭 Main Menu")
 col1, col2, col3, col4, col5, col6 = st.columns(6)
-
 with col1:
     if st.button("🏠 Home", use_container_width=True): st.session_state.page = "Home"; st.rerun()
 with col2:
@@ -301,13 +235,25 @@ with col2:
 with col3:
     if st.button("🔴 Live Class", use_container_width=True): st.session_state.page = "Live Class"; st.rerun()
 with col4:
-    if st.button("💬 Testimonials", use_container_width=True): st.session_state.page = "Testimonials"; st.rerun()
+    if st.button("💬 Stories", use_container_width=True): st.session_state.page = "Testimonials"; st.rerun()
 with col5:
     if st.button("🐍 Bootcamp", use_container_width=True): st.session_state.page = "Bootcamp"; st.rerun()
 with col6:
     if st.button("📞 Contact", use_container_width=True): st.session_state.page = "Contact"; st.rerun()
 
 st.write("")
+st.markdown("### 🤖 AI Power Tools (Free)")
+ai_col1, ai_col2 = st.columns(2)
+with ai_col1:
+    if st.button("🧠 Chat with AyA (AI Tutor)", use_container_width=True, type="primary"): 
+        st.session_state.page = "AyA_AI"
+        st.rerun()
+with ai_col2:
+    if st.button("📝 Generate Mock Test", use_container_width=True, type="primary"): 
+        st.session_state.page = "Mock_Test"
+        st.rerun()
+
+st.divider()
 
 # -----------------------------------------------------------------------------
 # 6. PAGE LOGIC
@@ -317,6 +263,20 @@ st.write("")
 # PAGE: HOME
 # ==========================================
 if st.session_state.page == "Home":
+    # --- WILD ADVERTISEMENT ---
+    st.markdown("""
+    <div class="ad-banner">
+        <div class="ad-title">🚨 The Education System Just Got a Reality Check</div>
+        <div class="ad-text">
+            Stop paying for "premium" test series. The corporate coaching giants are scared.<br>
+            <strong>INTRODUCING: THE MOLECULAR MAN AI SUITE.</strong><br><br>
+            1. <span class="ad-highlight">AyA (AI Tutor):</span> She doesn't sleep. She solves PDFs & problems instantly.<br>
+            2. <span class="ad-highlight">Infinite Mock Tests:</span> Generate tests for ANY Board/Subject for ₹0.<br><br>
+            🚫 <strong>NO SUBSCRIPTIONS. NO HIDDEN FEES. PURE TEACHING INTELLIGENCE.</strong>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     logo_col1, logo_col2 = st.columns([1, 2])
     with logo_col1:
         with st.container(border=True):
@@ -329,15 +289,13 @@ if st.session_state.page == "Home":
             st.markdown("### Personalized coaching in Mathematics, Physics, Chemistry & Biology")
             st.write("For Classes 6-12 & Competitive Exams (NEET/JEE/Boards)")
             st.write("")
-            
-            # Link to contact (Removed AI Tutor button)
-            st.link_button("📱 Book Free Trial", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
+            st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
     st.markdown("## 📊 Our Impact")
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("Students Taught", "500+")
     with m2: st.metric("Success Rate", "100%")
-    with m3: st.metric("Support", "24/7") # Changed from AI Support
+    with m3: st.metric("Support", "24/7")
     with m4: st.metric("Experience", "5+ Years")
 
     st.markdown("## 🎯 What We Offer")
@@ -347,23 +305,192 @@ if st.session_state.page == "Home":
             st.markdown("#### 👨‍🏫 Expert Tutoring")
             st.write("One-on-one and small group classes for Classes 6-12.")
     with s2:
-        # Replaced AI-Powered Learning with Generic Material to fill space
         with st.container(border=True):
             st.markdown("#### 📚 Comprehensive Material")
             st.write("Access to curated notes, practice problems, and revision guides.")
     with s3:
         with st.container(border=True):
             st.markdown("#### 🐍 Python Bootcamp")
-            st.write("Weekend intensive courses in Data Science & AI with hands-on projects.")
+            st.write("Weekend intensive courses in Data Science & AI.")
+
+# ==========================================
+# PAGE: AyA AI TUTOR
+# ==========================================
+elif st.session_state.page == "AyA_AI":
+    st.markdown("## 🧠 AyA - The Molecular Man AI")
+    st.caption("Your personal AI Tutor for Math, Science, and Coding.")
+
+    # API Setup
+    try:
+        groq_api_key = st.secrets["GROQ_API_KEY"]
+        groq_client = Groq(api_key=groq_api_key)
+    except Exception:
+        st.error("⚠️ GROQ_API_KEY not found in Secrets!")
+        st.stop()
+
+    SYSTEM_PROMPT = """You are **Aya**, the Lead AI Tutor at **The Molecular Man Expert Tuition Solutions**. 
+    Your Mission: Guide students from "Zero" to "Hero".
+    Tone: Encouraging, clear, patient, and intellectually rigorous.
+    Structure: 🧠 CONCEPT -> 🌍 CONTEXT -> ✍️ SOLUTION -> ✅ ANSWER -> 🚀 HERO TIP.
+    """
+
+    # --- INPUT AREA ---
+    with st.expander("📝 New Problem Input", expanded=(len(st.session_state.aya_messages) == 0)):
+        input_type = st.radio("Input Method:", ["📄 Text Problem", "📕 Upload PDF"], horizontal=True)
+        
+        if input_type == "📄 Text Problem":
+            user_text = st.text_area("Paste question:", height=100)
+            if st.button("Ask AyA 🚀", use_container_width=True):
+                if user_text:
+                    st.session_state.aya_messages = [] 
+                    st.session_state.aya_messages.append({"role": "user", "content": f"PROBLEM:\n{user_text}"})
+                    st.rerun()
+
+        elif input_type == "📕 Upload PDF":
+            uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+            if st.button("Analyze PDF 🚀", use_container_width=True):
+                if uploaded_file:
+                    try:
+                        pdf_reader = PyPDF2.PdfReader(uploaded_file)
+                        pdf_text = ""
+                        for page_num in range(min(2, len(pdf_reader.pages))):
+                            pdf_text += pdf_reader.pages[page_num].extract_text()[:3000]
+                        
+                        st.session_state.aya_messages = [] 
+                        st.session_state.aya_messages.append({"role": "user", "content": f"PROBLEM from PDF:\n{pdf_text}"})
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+    # --- CHAT DISPLAY ---
+    for msg in st.session_state.aya_messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # --- GENERATE RESPONSE ---
+    if st.session_state.aya_messages and st.session_state.aya_messages[-1]["role"] == "user":
+        with st.chat_message("assistant"):
+            with st.spinner("🤖 AyA is thinking..."):
+                try:
+                    msgs = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.aya_messages
+                    chat_completion = groq_client.chat.completions.create(
+                        messages=msgs,
+                        model="llama-3.3-70b-versatile",
+                        temperature=0.5,
+                        max_tokens=6000,
+                    )
+                    response_text = chat_completion.choices[0].message.content
+                    st.markdown(response_text)
+                    st.session_state.aya_messages.append({"role": "assistant", "content": response_text})
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+
+    # Follow-up
+    if st.session_state.aya_messages:
+        if user_input := st.chat_input("Ask a follow-up..."):
+            st.session_state.aya_messages.append({"role": "user", "content": user_input})
+            st.rerun()
+
+# ==========================================
+# PAGE: MOCK TEST
+# ==========================================
+elif st.session_state.page == "Mock_Test":
+    st.markdown("## 📝 AI Mock Test Generator")
+    st.caption("Generate unlimited tests for any Board, Subject, or Difficulty.")
+    
+    # API Setup
+    api_key = st.secrets.get("GROQ_API_KEY")
+    if not api_key:
+        st.error("Missing API Key"); st.stop()
+    
+    client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+
+    # Functions
+    def get_questions_json(board, cls, sub, chap, num, diff, q_type):
+        safe_sub = sub.encode('ascii', 'ignore').decode('ascii').strip()
+        if q_type == "MCQ":
+            prompt = f"""
+            You are a strict Examiner for {board} Board. Subject: {safe_sub}, Class: {cls}, Chapter: {chap}.
+            Create a valid JSON list of {num} {diff} MCQs.
+            Format: [{{"id": 1, "question": "...", "options": ["A","B","C","D"], "correct_answer": "A"}}]
+            """
+        else:
+            prompt = f"""
+            You are a strict Examiner for {board} Board. Subject: {safe_sub}, Class: {cls}, Chapter: {chap}.
+            Create a valid JSON list of {num} {diff} Descriptive Questions with marks.
+            Format: [{{"id": 1, "question": "...", "marks": 5}}]
+            """
+        try:
+            res = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": prompt + " Return ONLY JSON."}],
+                temperature=0.1
+            )
+            content = res.choices[0].message.content.replace("```json", "").replace("```", "").strip()
+            return json.loads(content)
+        except: return None
+
+    # Config
+    if not st.session_state.mt_questions:
+        with st.container(border=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                board = st.selectbox("Board", ["CBSE", "ICSE", "State", "Other"])
+                cls = st.selectbox("Class", ["9", "10", "11", "12"])
+                diff = st.selectbox("Difficulty", ["Easy", "Medium", "Hard"])
+            with c2:
+                sub = st.text_input("Subject", "Physics")
+                chap = st.text_input("Chapter", "Thermodynamics")
+                q_type = st.radio("Format", ["MCQ", "Descriptive"], horizontal=True)
+                num = st.slider("Questions", 3, 20, 5)
+
+        if st.button("🚀 Generate Test", type="primary"):
+            if sub and chap:
+                with st.spinner("Generating Paper..."):
+                    st.session_state.mt_q_type = q_type
+                    st.session_state.mt_questions = get_questions_json(board, cls, sub, chap, num, diff, q_type)
+                    st.session_state.mt_answers = {}
+                    st.session_state.mt_feedback = None
+                    st.rerun()
+
+    # Interface
+    else:
+        if st.session_state.mt_feedback:
+            st.success("Test Analysis Complete")
+            st.markdown(st.session_state.mt_feedback)
+            if st.button("🔄 Start New Test"):
+                st.session_state.mt_questions = None
+                st.rerun()
+        else:
+            with st.form("mock_test_form"):
+                for q in st.session_state.mt_questions:
+                    st.markdown(f"**Q{q['id']}. {q['question']}**")
+                    if st.session_state.mt_q_type == "MCQ":
+                        st.radio("Choose:", q['options'], key=f"q_{q['id']}", label_visibility="collapsed")
+                    else:
+                        st.text_area("Answer:", key=f"q_{q['id']}")
+                    st.markdown("---")
+                
+                submitted = st.form_submit_button("✅ Submit Exam")
+            
+            if submitted:
+                answers = {str(q['id']): st.session_state.get(f"q_{q['id']}") for q in st.session_state.mt_questions}
+                prompt = f"Grade this student. Questions: {json.dumps(st.session_state.mt_questions)}. Answers: {json.dumps(answers)}."
+                with st.spinner("Grading..."):
+                    res = client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.3
+                    )
+                    st.session_state.mt_feedback = res.choices[0].message.content
+                    st.rerun()
 
 # ==========================================
 # PAGE: LIVE CLASS
 # ==========================================
 elif st.session_state.page == "Live Class":
     st.markdown("# 🔴 Molecular Man Live Classroom")
-    
     if not st.session_state.logged_in:
-        # LOGIN VIEW
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.container(border=True):
@@ -379,7 +506,6 @@ elif st.session_state.page == "Live Class":
                     else:
                         st.error("❌ Invalid Credentials")
     else:
-        # LOGGED IN DASHBOARD
         col1, col2 = st.columns([3, 1])
         with col1: st.write(f"Logged in as: **{st.session_state.username}**")
         with col2:
@@ -390,17 +516,14 @@ elif st.session_state.page == "Live Class":
         st.divider()
 
         if st.session_state.is_admin:
-            # --- TEACHER DASHBOARD ---
             st.markdown("## 👨‍🏫 Teacher Controls")
             status = get_live_status()
-            
             col_a, col_b = st.columns([2, 1])
             with col_a:
                 with st.container(border=True):
                     if status["is_live"]:
                         st.success(f"✅ YOU ARE LIVE: {status['topic']}")
                         st.markdown(f"**Meeting Link:** {status['link']}")
-                        
                         if st.button("End Class ⏹️", type="primary"):
                             set_live_status(False)
                             st.rerun()
@@ -408,8 +531,7 @@ elif st.session_state.page == "Live Class":
                         st.info("Start a new session")
                         with st.form("start_live"):
                             topic = st.text_input("Topic")
-                            meet_link = st.text_input("Google Meet Link", placeholder="[https://meet.google.com/](https://meet.google.com/)...")
-                            
+                            meet_link = st.text_input("Google Meet Link")
                             if st.form_submit_button("GO LIVE 🔴"):
                                 if topic and meet_link:
                                     set_live_status(True, topic, meet_link)
@@ -425,7 +547,6 @@ elif st.session_state.page == "Live Class":
                         st.success("Sent")
 
         else:
-            # --- STUDENT DASHBOARD ---
             status = get_live_status()
             if status["is_live"]:
                 st.markdown(f"""
@@ -433,25 +554,16 @@ elif st.session_state.page == "Live Class":
                     <h1 style="color: #ff4444 !important;">🔴 LIVE NOW</h1>
                     <h2>Topic: {status['topic']}</h2>
                     <br>
-                    <a href="{status['link']}" target="_blank" class="live-join-btn">
-                        🎥 JOIN GOOGLE MEET
-                    </a>
-                    <p style="margin-top:10px; color:#ccc;">(Opens in new tab)</p>
+                    <a href="{status['link']}" target="_blank" style="background:red;color:white;padding:10px 20px;border-radius:20px;text-decoration:none;">🎥 JOIN GOOGLE MEET</a>
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                st.markdown("""
-                <div style="padding: 40px; text-align: center; border: 2px dashed rgba(255,255,255,0.5); border-radius: 15px;">
-                    <h2>💤 Class is offline</h2>
-                    <p>Check back later for the next session.</p>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown("### 💤 Class is offline")
             
             st.markdown("### 🔔 Notice Board")
             for n in get_notifications():
                 st.markdown(f"**{n['date']}**: {n['message']}")
                 st.markdown("---")
-
 
 # ==========================================
 # PAGE: SERVICES
@@ -459,435 +571,94 @@ elif st.session_state.page == "Live Class":
 elif st.session_state.page == "Services":
     st.markdown("# 📚 Our Services")
     st.markdown("## 🎓 Subjects We Teach")
-    
     sub1, sub2 = st.columns(2)
-    
     with sub1:
         with st.container(border=True):
             st.markdown("### 📐 Mathematics")
-            st.markdown("**Classes 6-8:** Foundation building with number systems, geometry, algebra basics")
-            st.markdown("**Classes 9-10 (CBSE/State):** Algebra, Trigonometry, Coordinate Geometry, Statistics")
-            st.markdown("**Classes 11-12 (Science):** Calculus, Vectors, 3D Geometry, Probability")
-            st.markdown("**Classes 11-12 (Commerce):** Business Math, Statistics for Economics")
-        
+            st.write("Classes 6-12 (CBSE/State/Commerce/Science)")
         st.write("")
         with st.container(border=True):
             st.markdown("### ⚗️ Chemistry")
-            st.markdown("**Classes 6-10:** Basic concepts, Periodic Table, Chemical Reactions")
-            st.markdown("**Classes 11-12:** Physical, Organic & Inorganic Chemistry")
-            st.markdown("**Specialization:** NEET/JEE Chemistry Problem-Solving")
-    
+            st.write("NEET/JEE Chemistry, Organic & Inorganic")
     with sub2:
         with st.container(border=True):
             st.markdown("### ⚡ Physics")
-            st.markdown("**Classes 6-10:** Mechanics, Light, Sound, Electricity basics")
-            st.markdown("**Classes 11-12:** Mechanics, Thermodynamics, Electromagnetism, Modern Physics")
-            st.markdown("**Focus:** Numerical problem-solving & conceptual clarity")
-        
+            st.write("Conceptual clarity & Numerical problem solving")
         st.write("")
         with st.container(border=True):
             st.markdown("### 🧬 Biology")
-            st.markdown("**Classes 6-10:** Cell biology, Human body systems, Ecology")
-            st.markdown("**Classes 11-12:** Botany, Zoology, Genetics, Evolution")
-            st.markdown("**NEET Prep:** High-yield topics with diagram practice")
-    
-    st.write("")
-    st.markdown("## 🏆 Competitive Exam Preparation")
-    
-    e1, e2, e3 = st.columns(3)
-    
-    with e1:
-        with st.container(border=True):
-            st.markdown("#### 🎯 NEET (Medical)")
-            st.markdown("**Focus Areas:**")
-            st.write("• Biology: High-yield topics & diagrams")
-            st.write("• Chemistry: Organic reactions & mechanisms")
-            st.write("• Physics: Numerical shortcuts")
-    
-    with e2:
-        with st.container(border=True):
-            st.markdown("#### 🔬 JEE (Engineering)")
-            st.markdown("**Focus Areas:**")
-            st.write("• Mathematics: Advanced problem-solving")
-            st.write("• Physics: Conceptual depth")
-            st.write("• Chemistry: Simplified ")
-    
-    with e3:
-        with st.container(border=True):
-            st.markdown("#### 📝 Board Exams")
-            st.markdown("**Preparation Strategy:**")
-            st.write("• IGCSE/ISC/IB/ICSE?CBSE/State syllabus mastery")
-            st.write("• Previous year papers")
-            st.write("• Writing practice for theory")
-    
-    st.write("")
-    st.markdown("## 💡 Our Teaching Approach")
-    
-    t1, t2 = st.columns(2)
-    
-    with t1:
-        with st.container(border=True):
-            st.markdown("### 📋 Personalized Learning Plans")
-            st.write("Every student receives a custom curriculum based on:")
-            st.write("• Initial assessment of strengths & weaknesses")
-            st.write("• Target exam (Board/NEET/JEE)")
-            st.write("• Learning pace & preferred style")
-            st.write("• Regular progress tracking")
-        
-        st.write("")
-        with st.container(border=True):
-            st.markdown("### 🎨 Interactive Teaching Methods")
-            st.write("• Visual aids & animations for complex topics")
-            st.write("• Real-world applications of concepts")
-            st.write("• Hands-on problem-solving sessions")
-            st.write("• Doubt-clearing after every class")
-    
-    with t2:
-        with st.container(border=True):
-            st.markdown("### 📊 Continuous Assessment")
-            st.write("• Weekly quizzes & mock tests")
-            st.write("• Chapter-wise assignments")
-            st.write("• Monthly performance reports")
-            st.write("• Parent-teacher meetings")
-        
-        st.write("")
-        with st.container(border=True):
-            st.markdown("### 🤖 Technology Integration")
-            st.write("• AI tutor available 24/7 for homework help")
-            st.write("• Digital study materials & notes")
-            st.write("• Doubt sessions ")
-            st.write("• Recorded lectures for revision")
-    
-    st.write("")
-    st.markdown("## 👥 Batch Options")
-    
-    b1, b2, b3 = st.columns(3)
-    
-    with b1:
-        with st.container(border=True):
-            st.markdown("#### 🎯 One-on-One")
-            st.markdown("**Best for:** Personalized attention")
-            st.write("• Fully customized pace")
-            st.write("• Flexible timing")
-            st.write("• Focus on specific weak areas")
-    
-    with b2:
-        with st.container(border=True):
-            st.markdown("#### 👫 Small Group (3-5)")
-            st.markdown("**Best for:** Peer learning")
-            st.write("• Interactive discussions")
-            st.write("• Competitive environment")
-            st.write("• Affordable pricing")
-    
-    with b3:
-        with st.container(border=True):
-            st.markdown("#### 💻 Online Classes")
-            st.markdown("**Best for:** Flexibility")
-            st.write("• Learn from anywhere")
-            st.write("• Recorded sessions")
-            st.write("• Digital whiteboard")
-
+            st.write("Botany, Zoology & NEET Prep")
 
 # ==========================================
 # PAGE: TESTIMONIALS
 # ==========================================
 elif st.session_state.page == "Testimonials":
-    # Custom CSS to force BLACK text on WHITE cards
-    st.markdown("""
-    <style>
-        .review-card {
-            background-color: #ffffff !important;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            border-left: 5px solid #2c5282;
-            color: #000000 !important; /* Force Black Text */
-        }
-        .review-text {
-            font-size: 16px;
-            font-style: italic;
-            color: #333333 !important; /* Dark Grey Text */
-            line-height: 1.5;
-        }
-        .review-author {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #2c5282 !important; /* Navy Blue Author Name */
-            text-align: right;
-        }
-        /* Metrics Box Styling */
-        .metric-card {
-            background-color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            color: black !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .metric-value { font-size: 28px; font-weight: bold; color: black; }
-        .metric-label { font-size: 14px; color: #555; }
-    </style>
-    """, unsafe_allow_html=True)
-
     st.markdown("# 💬 Student Success Stories")
-    
     t1, t2 = st.columns(2)
-    
-    # Function to render the clean card
     def testimonial_card(text, author):
         st.markdown(f"""
-        <div class="review-card">
-            <div class="review-text">"{text}"</div>
-            <div class="review-author">- {author}</div>
+        <div style="background:white; padding:20px; border-radius:10px; border-left:5px solid #2c5282; margin-bottom:20px;">
+            <div style="color:#333; font-style:italic;">"{text}"</div>
+            <div style="color:#2c5282; font-weight:bold; margin-top:10px; text-align:right;">- {author}</div>
         </div>
         """, unsafe_allow_html=True)
 
     with t1:
-        testimonial_card("Sir's organic chemistry teaching helped me a lot. His mechanism approach made everything so clear!", "Pranav.S, Class 12 - IGCSE")
-        testimonial_card("The way concepts are explained is amazing! Got stuck at 11 PM on calculus homework, and the notes helped me solve everything.", "Arjun K., Class 12 CBSE")
-        testimonial_card("My daughter's math grades improved from 60% to 95% in one semester. The personalized attention really works!", "Mrs. Lakshmi, Parent")
-    
+        testimonial_card("Sir's organic chemistry teaching helped me a lot!", "Pranav.S, Class 12")
+        testimonial_card("Math grades improved from 60% to 95%.", "Mrs. Lakshmi, Parent")
     with t2:
-        testimonial_card("Physics numerical problems used to scare me. Now I solve them confidently thanks to sir's shortcut techniques.", "Rahul M., JEE Aspirant")
-        testimonial_card("The Python bootcamp was amazing! Learned data science basics in 8 weekends and built my own project.", "Divya S., College Student")
-        testimonial_card("Small batch size means sir knows exactly where I'm struggling. Best decision for my board exam prep!", "Sneha P., Class 12 ISC")
-    
-    st.write("")
-    st.markdown("## 🏆 Our Results")
-    
-    r1, r2, r3 = st.columns(3)
-    
-    with r1:
-        st.markdown('<div class="metric-card"><div class="metric-label">Board Exams(Including IGCSE,ICSE,ISC,CBSE,STATE)</div><div class="metric-value">80%</div><div class="metric-label">Average Score</div></div>', unsafe_allow_html=True)
-    with r2:
-        st.markdown('<div class="metric-card"><div class="metric-label">Improvement</div><div class="metric-value">60%</div><div class="metric-label">vs. Baseline</div></div>', unsafe_allow_html=True)
-    with r3:
-        st.markdown('<div class="metric-card"><div class="metric-label">Resolution Time</div><div class="metric-value">&lt; 2 Hrs</div><div class="metric-label">Doubt Support</div></div>', unsafe_allow_html=True)
-    
-    st.write("")
-    st.markdown("## 💡 Why Parents Trust Us")
-    
-    w1, w2, w3 = st.columns(3)
-    
-    # Using the same card style for "Why Trust Us" to ensure visibility
-    with w1:
-        st.markdown('<div class="review-card"><h3>🎓 Expert Educator</h3><p style="color:#333;">One-on-one mentoring that identifies specific learning gaps.</p></div>', unsafe_allow_html=True)
-    with w2:
-        st.markdown('<div class="review-card"><h3>🧠 Conceptual</h3><p style="color:#333;">No rote memorization. We focus on "Why" and "How".</p></div>', unsafe_allow_html=True)
-    with w3:
-        st.markdown('<div class="review-card"><h3>💰 Fair Pricing</h3><p style="color:#333;">No hidden fees. Quality education for every family.</p></div>', unsafe_allow_html=True)
-
-    st.write("")
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        st.link_button("📱 Book Free Trial", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
+        testimonial_card("Physics numericals used to scare me. Now I solve them confidently.", "Rahul M., JEE Aspirant")
+        testimonial_card("The Python bootcamp was amazing!", "Divya S., College Student")
 
 # ==========================================
 # PAGE: BOOTCAMP
 # ==========================================
 elif st.session_state.page == "Bootcamp":
     st.markdown("# 🐍 Python for Data Science & AI")
-    
     boot1, boot2 = st.columns([1, 1.5])
-    
     with boot1:
-        # Tries to render poster, then python_bootcamp, then default text
         if not render_image("poster", use_column_width=True):
-            if not render_image("python_bootcamp", use_column_width=True):
-                with st.container(border=True):
-                    st.markdown("# 🐍")
-                    st.markdown("## Python")
-                    st.markdown("### Weekend Intensive Program")
-    
+            st.markdown("# 🐍")
     with boot2:
         with st.container(border=True):
             st.markdown("### Weekend Intensive Program")
             st.write("Master the most in-demand programming language")
-            st.write("")
-            
             st.markdown("👨‍🏫 **Instructor:** Mohammed Salmaan M")
-            st.caption("Data Science & AI Expert | Created Ed-Tech Plotform - The Molecular Man Expert Tuition Solutions")
-            st.write("")
-            
             st.markdown("📅 **Schedule:** Saturdays & Sundays")
-            st.caption("1 hours per session | Morning & Evening batches")
-            st.write("")
-            
-            st.markdown("💻 **Requirements:** Laptop with internet")
-            st.caption("We'll help you setup Jupyter Notebook & VS Code")
-            st.write("")
-            
-            with st.expander("📚 Curriculum Highlights"):
-                st.write("• Python Basics & Data Structures")
-                st.write("• NumPy & Pandas for Data Analysis")
-                st.write("• Data Visualization with Matplotlib")
-                st.write("• Introduction to Machine Learning")
-                st.write("• Real-world Project: Build your first AI model")
-        
-        st.write("")
-        st.link_button("📱 Enroll Now", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
+            st.link_button("📱 Enroll Now", "https://wa.me/917339315376", use_container_width=True)
 
 # ==========================================
 # PAGE: CONTACT
 # ==========================================
 elif st.session_state.page == "Contact":
     st.markdown("# 📞 Get In Touch")
-    
     c1, c2 = st.columns([1, 1])
-    
     with c1:
         with st.container(border=True):
             st.markdown("### Contact Information")
-            st.write("")
-            
-            st.markdown("**📱 Phone**")
-            st.write("+91 73393 15376")
-            st.write("")
-            
-            st.markdown("**✉️ Email**")
-            st.markdown(
-                """
-                <div style="
-                    display: inline-block;
-                    background-color: #ffffff;
-                    padding: 10px 20px;
-                    border-radius: 25px;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                    border: 1px solid #e0e0e0;
-                ">
-                    <a href="mailto:the.molecularmanexpert@gmail.com" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 20px;">✉️</span>
-                        <span style="
-                            color: #333333 !important;
-                            font-weight: bold;
-                            font-size: 16px;
-                            font-family: sans-serif;
-                        ">
-                            the.molecularmanexpert@gmail.com
-                        </span>
-                    </a>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.write("")
-            
-            st.markdown("**🕒 Operating Hours**")
-            st.write("Monday - Saturday: 9:00 AM - 9:00 PM")
-            st.write("Sunday: Closed (Support Available 24/7)")
-            st.write("")
-            
-            st.link_button("💬 WhatsApp Us", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
-    
+            st.markdown("**📱 Phone:** +91 73393 15376")
+            st.markdown("**✉️ Email:** the.molecularmanexpert@gmail.com")
+            st.link_button("💬 WhatsApp Us", "https://wa.me/917339315376", use_container_width=True)
     with c2:
         with st.container(border=True):
             st.markdown("### Send us a Message")
-            
-            # UNIQUE KEY for this form to prevent duplicate key errors
-            with st.form("contact_page_form_unique"):
-                name = st.text_input("Your Name")
-                phone = st.text_input("Phone Number")
-                email = st.text_input("Email (Optional)")
-                grade = st.selectbox("Student's Grade", 
-                    ["6-8", "9-10", "11-12 (Science)", "11-12 (Commerce)", "College/Other"])
-                message = st.text_area("Message", height=120)
-                
-                # CORRECTED INDENTATION: Button inside the form
-                submitted = st.form_submit_button("Send Message", use_container_width=True)
-
-                if submitted:
+            with st.form("contact_page_form"):
+                name = st.text_input("Name")
+                phone = st.text_input("Phone")
+                msg = st.text_area("Message")
+                if st.form_submit_button("Send Message", use_container_width=True):
                     if name and phone:
                         try:
-                            # 1. Prepare data
-                            form_data = {
-                                "name": name,
-                                "phone": phone,
-                                "email": email,
-                                "grade": grade,
-                                "message": message,
-                                "_subject": f"New Inquiry from {name}",
-                                "_captcha": "false"
-                            }
+                            url = "https://formsubmit.co/the.molecularmanexpert@gmail.com"
+                            requests.post(url, data={"name": name, "phone": phone, "message": msg, "_captcha": "false"})
+                            st.success("✅ Thank you! We'll contact you shortly.")
+                        except: st.error("Connection Error")
+                    else: st.warning("Please fill details")
 
-                            # 2. Send to FormSubmit
-                            # URL is constructed safely by joining strings to guarantee no hidden spaces
-                            url = "https://" + "formsubmit.co/the.molecularmanexpert@gmail.com"
-                            response = requests.post(url, data=form_data)
-
-                            # 3. Success Message
-                            if response.status_code == 200:
-                                st.markdown(
-                                    """
-                                    <div style="
-                                        background-color: #a7e4d8; 
-                                        padding: 15px; 
-                                        border-radius: 10px; 
-                                        color: black; 
-                                        font-weight: bold; 
-                                        border: 1px solid #6ccec0;
-                                        margin-top: 10px;
-                                    ">
-                                        ✅ Thank you! We'll contact you within 24 hours.
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
-                                st.balloons()
-                            else:
-                                st.error("⚠️ Connection error. Please try again.")
-                        
-                        except Exception as e:
-                            st.error(f"⚠️ Error: {e}")
-
-                    else:
-                        st.warning("⚠️ Please fill in your name and phone number.")
-
-# -----------------------------------------------------------------------------
-# FOOTER
-# -----------------------------------------------------------------------------
+# Footer
 st.write("")
-st.write("")
-with st.container(border=True):
-    # 1. CSS Animation Logic
-    st.markdown("""
-        <style>
-        @keyframes gradient-animation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .animated-footer-text {
-            font-weight: 800;
-            font-size: 24px;
-            text-transform: uppercase;
-            text-align: center;
-            letter-spacing: 2px;
-            /* The Color Gradient: Add more colors here if you want */
-            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
-            background-size: 300%;
-            
-            /* Clip the background to the text */
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; 
-            background-clip: text;
-            color: transparent;
-            
-            /* The Animation Speed */
-            animation: gradient-animation 10s ease infinite;
-        }
-        </style>
-        
-        <div class="animated-footer-text">
-            PRECISE • PASSIONATE • PROFESSIONAL
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # The Copyright Caption
-    st.markdown(
-        "<div style='text-align: center; color: gray; font-size: 12px; margin-top: 10px;'>"
-        "© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M. All Rights Reserved."
-        "</div>", 
-        unsafe_allow_html=True
-    )
+st.markdown("""
+    <div style='text-align: center; color: rgba(255,255,255,0.5); padding: 20px;'>
+        <p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
+    </div>
+""", unsafe_allow_html=True)
