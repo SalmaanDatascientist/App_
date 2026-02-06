@@ -805,17 +805,45 @@ elif st.session_state.page == "Testimonials":
 # ==========================================
 elif st.session_state.page == "Bootcamp":
     st.markdown("# 🐍 Python for Data Science & AI")
+    
     boot1, boot2 = st.columns([1, 1.5])
+    
     with boot1:
+        # Tries to render poster, then python_bootcamp, then default text
         if not render_image("poster", use_column_width=True):
-            st.markdown("# 🐍")
+            if not render_image("python_bootcamp", use_column_width=True):
+                with st.container(border=True):
+                    st.markdown("# 🐍")
+                    st.markdown("## Python")
+                    st.markdown("### Weekend Intensive Program")
+    
     with boot2:
         with st.container(border=True):
             st.markdown("### Weekend Intensive Program")
             st.write("Master the most in-demand programming language")
+            st.write("")
+            
             st.markdown("👨‍🏫 **Instructor:** Mohammed Salmaan M")
+            st.caption("Data Science & AI Expert | Created Ed-Tech Plotform - The Molecular Man Expert Tuition Solutions")
+            st.write("")
+            
             st.markdown("📅 **Schedule:** Saturdays & Sundays")
-            st.link_button("📱 Enroll Now", "https://wa.me/917339315376", use_container_width=True)
+            st.caption("1 hours per session | Morning & Evening batches")
+            st.write("")
+            
+            st.markdown("💻 **Requirements:** Laptop with internet")
+            st.caption("We'll help you setup Jupyter Notebook & VS Code")
+            st.write("")
+            
+            with st.expander("📚 Curriculum Highlights"):
+                st.write("• Python Basics & Data Structures")
+                st.write("• NumPy & Pandas for Data Analysis")
+                st.write("• Data Visualization with Matplotlib")
+                st.write("• Introduction to Machine Learning")
+                st.write("• Real-world Project: Build your first AI model")
+        
+        st.write("")
+        st.link_button("📱 Enroll Now", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
 
 #==========================================
 # PAGE: CONTACT
@@ -950,6 +978,7 @@ with st.container(border=True):
         "</div>", 
         unsafe_allow_html=True
     )
+
 
 
 
