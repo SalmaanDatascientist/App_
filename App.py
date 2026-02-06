@@ -197,19 +197,54 @@ st.markdown("""
     /* Hide Menu */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    /* Ad Banner Style */
-    .ad-banner {
-        background: linear-gradient(45deg, #000000, #1a1a1a);
-        border: 2px solid #ffd700;
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 25px;
-        text-align: center;
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    /* --- NEW DYNAMIC AD BANNER STYLE --- */
+    @keyframes neon-pulse {
+        0% { box-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700; border-color: #ffd700; }
+        50% { box-shadow: 0 0 20px #ff0055, 0 0 30px #ff0055; border-color: #ff0055; }
+        100% { box-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700; border-color: #ffd700; }
     }
-    .ad-title { font-size: 24px; font-weight: 900; color: #ffd700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    .ad-text { font-size: 16px; color: #ffffff; margin-bottom: 15px; line-height: 1.5; }
-    .ad-highlight { color: #00ff00; font-weight: bold; }
+    .dynamic-ad-box {
+        background: rgba(0, 0, 0, 0.6); /* Semi-transparent dark background */
+        backdrop-filter: blur(10px);
+        border: 2px solid #ffd700;
+        border-radius: 20px;
+        padding: 30px;
+        margin: 30px 0;
+        text-align: center;
+        animation: neon-pulse 3s infinite alternate; /* The Pulse Animation */
+    }
+    .ad-badge {
+        background: linear-gradient(45deg, #ff0055, #ff5500);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        display: inline-block;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .ad-title { 
+        font-size: 28px; 
+        font-weight: 900; 
+        color: #ffffff; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        margin-bottom: 15px; 
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .ad-text { 
+        font-size: 18px; 
+        color: #e0e0e0; 
+        margin-bottom: 20px; 
+        line-height: 1.6; 
+    }
+    .ad-highlight { 
+        color: #ffd700; 
+        font-weight: bold; 
+        text-decoration: underline;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -263,20 +298,8 @@ st.divider()
 # PAGE: HOME
 # ==========================================
 if st.session_state.page == "Home":
-    # --- WILD ADVERTISEMENT ---
-    st.markdown("""
-    <div class="ad-banner">
-        <div class="ad-title">🚨 The Education System Just Got a Reality Check</div>
-        <div class="ad-text">
-            Stop paying for "premium" test series. The corporate coaching giants are scared.<br>
-            <strong>INTRODUCING: THE MOLECULAR MAN AI SUITE.</strong><br><br>
-            1. <span class="ad-highlight">AyA (AI Tutor):</span> She doesn't sleep. She solves PDFs & problems instantly.<br>
-            2. <span class="ad-highlight">Infinite Mock Tests:</span> Generate tests for ANY Board/Subject for ₹0.<br><br>
-            🚫 <strong>NO SUBSCRIPTIONS. NO HIDDEN FEES. PURE TEACHING INTELLIGENCE.</strong>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    
+    # 1. Logo and Intro Section
     logo_col1, logo_col2 = st.columns([1, 2])
     with logo_col1:
         with st.container(border=True):
@@ -291,6 +314,22 @@ if st.session_state.page == "Home":
             st.write("")
             st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
+    # 2. DYNAMIC ADVERTISEMENT (Moved Here & Animated)
+    st.markdown("""
+    <div class="dynamic-ad-box">
+        <span class="ad-badge">🚀 New AI Revolution</span>
+        <div class="ad-title">The Education System Just Got a Reality Check</div>
+        <div class="ad-text">
+            Stop paying for "premium" test series. The corporate coaching giants are scared.<br>
+            <strong>INTRODUCING: THE MOLECULAR MAN AI SUITE.</strong><br><br>
+            1. <span class="ad-highlight">AyA (AI Tutor):</span> She doesn't sleep. She solves PDFs & problems instantly.<br>
+            2. <span class="ad-highlight">Infinite Mock Tests:</span> Generate tests for ANY Board/Subject for ₹0.<br><br>
+            <span style="opacity: 0.8; font-size: 14px;">🚫 NO SUBSCRIPTIONS. NO HIDDEN FEES. PURE TEACHING INTELLIGENCE.</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3. Rest of the content
     st.markdown("## 📊 Our Impact")
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("Students Taught", "500+")
@@ -666,53 +705,10 @@ elif st.session_state.page == "Contact":
                         except: st.error("Connection Error")
                     else: st.warning("Please fill details")
 
-# -----------------------------------------------------------------------------
-# FOOTER
-# -----------------------------------------------------------------------------
+# Footer
 st.write("")
-st.write("")
-with st.container(border=True):
-    # 1. CSS Animation Logic
-    st.markdown("""
-        <style>
-        @keyframes gradient-animation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .animated-footer-text {
-            font-weight: 800;
-            font-size: 24px;
-            text-transform: uppercase;
-            text-align: center;
-            letter-spacing: 2px;
-            /* The Color Gradient: Add more colors here if you want */
-            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
-            background-size: 300%;
-            
-            /* Clip the background to the text */
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; 
-            background-clip: text;
-            color: transparent;
-            
-            /* The Animation Speed */
-            animation: gradient-animation 10s ease infinite;
-        }
-        </style>
-        
-        <div class="animated-footer-text">
-            PRECISE • PASSIONATE • PROFESSIONAL
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # The Copyright Caption
-    st.markdown(
-        "<div style='text-align: center; color: gray; font-size: 12px; margin-top: 10px;'>"
-        "© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M. All Rights Reserved."
-        "</div>", 
-        unsafe_allow_html=True
-    )
-
-
+st.markdown("""
+    <div style='text-align: center; color: rgba(255,255,255,0.5); padding: 20px;'>
+        <p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
+    </div>
+""", unsafe_allow_html=True)
