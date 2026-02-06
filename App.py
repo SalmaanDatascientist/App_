@@ -821,9 +821,11 @@ elif st.session_state.page == "Bootcamp":
 # PAGE: CONTACT
 # ==========================================
 # ==========================================
-# PAGE: CONTACT (DEBUG VERSION)
+# PAGE: CONTACT (FAILSAFE VERSION)
 # ==========================================
 elif st.session_state.page == "Contact":
+    import urllib.parse # Required for the link generation
+
     st.markdown("# 📞 Get In Touch")
     c1, c2 = st.columns([1, 1])
     
@@ -832,66 +834,74 @@ elif st.session_state.page == "Contact":
             st.markdown("### Contact Information")
             st.markdown("**📱 Phone:** +91 73393 15376")
             st.markdown("**✉️ Email:** the.molecularmanexpert@gmail.com")
-            
-            # Manual Mailto Link
-            st.markdown("""
-            <a href="mailto:the.molecularmanexpert@gmail.com?subject=Inquiry from Student">
-                <button style="background-color:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; cursor:pointer;">
-                    📧 Click to Email Directly
-                </button>
-            </a>
-            """, unsafe_allow_html=True)
-            
             st.write("")
-            st.link_button("💬 WhatsApp Us", "https://wa.me/917339315376", use_container_width=True)
+            st.markdown("### 📍 Location")
+            st.write("Madurai, Tamil Nadu")
+            st.write("")
+            st.link_button("💬 Chat on WhatsApp", "https://wa.me/917339315376", use_container_width=True)
 
     with c2:
         with st.container(border=True):
             st.markdown("### Send us a Message")
             
-            # Form
-            with st.form("contact_form_debug"):
+            # We use a form to collect data, but we don't submit it to a server
+            with st.container():
                 name = st.text_input("Name")
                 phone = st.text_input("Phone")
+                grade = st.selectbox("Grade", ["Class 6-8", "Class 9-10", "Class 11-12", "Repeater/Other"])
                 msg = st.text_area("Message")
                 
-                # Hidden honey-pot field to prevent bot spam (FormSubmit feature)
-                # We don't display it, but we send it empty.
-                
-                submit_btn = st.form_submit_button("Send Message", use_container_width=True)
-
-                if submit_btn:
-                    if name and phone:
-                        # 1. Prepare Payload
-                        url = "https://formsubmit.co/the.molecularmanexpert@gmail.com"
-                        payload = {
-                            "name": name,
-                            "phone": phone,
-                            "message": msg,
-                            "_subject": f"New Lead: {name}",
-                            "_captcha": "false",
-                            "_template": "table" 
-                        }
-                        
-                        try:
-                            # 2. Send Request
-                            response = requests.post(url, data=payload)
-                            
-                            # 3. DIAGNOSTIC OUTPUT
-                            if response.status_code == 200:
-                                st.success("✅ Success! Server accepted the form.")
-                                st.balloons()
-                                # Check if activation is pending
-                                if "Action Required" in response.text:
-                                    st.warning("⚠️ ACTION REQUIRED: Check your Gmail (and Spam folder) to Activate FormSubmit for the first time.")
-                            else:
-                                st.error(f"❌ Error {response.status_code}")
-                                st.code(response.text) # This will show you EXACTLY why it failed
-                                
-                        except Exception as e:
-                            st.error(f"Connection Error: {e}")
-                    else:
-                        st.warning("Please fill in Name and Phone.")
+                # Logic to generate the mailto link
+                if name and phone and msg:
+                    # Create a safe URL string for the email body
+                    subject = f"Tuition Inquiry from {name}"
+                    body = f"Name: {name}\nPhone: {phone}\nGrade: {grade}\n\nMessage:\n{msg}"
+                    
+                    # URL Encode the strings so they work in a link
+                    safe_subject = urllib.parse.quote(subject)
+                    safe_body = urllib.parse.quote(body)
+                    
+                    # The Magic Link
+                    mailto_link = f"mailto:the.molecularmanexpert@gmail.com?subject={safe_subject}&body={safe_body}"
+                    
+                    st.markdown(f"""
+                    <a href="{mailto_link}" target="_blank" style="text-decoration: none;">
+                        <div style="
+                            width: 100%;
+                            background: linear-gradient(90deg, #1e3a5f, #3b6b9e);
+                            color: white;
+                            text-align: center;
+                            padding: 12px;
+                            border-radius: 25px;
+                            font-weight: bold;
+                            border: 1px solid white;
+                            margin-top: 10px;
+                            cursor: pointer;
+                        ">
+                            🚀 Click to Send Email
+                        </div>
+                    </a>
+                    <div style="text-align:center; font-size:12px; color:#aaa; margin-top:5px;">
+                        (Opens your default email app)
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    # Disabled looking button if fields are empty
+                    st.markdown("""
+                    <div style="
+                        width: 100%;
+                        background: #444;
+                        color: #888;
+                        text-align: center;
+                        padding: 12px;
+                        border-radius: 25px;
+                        font-weight: bold;
+                        border: 1px solid #555;
+                        margin-top: 10px;
+                    ">
+                        Fill details to enable Send
+                    </div>
+                    """, unsafe_allow_html=True)
 # -----------------------------------------------------------------------------
 # FOOTER
 # -----------------------------------------------------------------------------
@@ -940,5 +950,6 @@ with st.container(border=True):
         "</div>", 
         unsafe_allow_html=True
     )
+
 
 
