@@ -817,7 +817,7 @@ elif st.session_state.page == "Bootcamp":
             st.markdown("📅 **Schedule:** Saturdays & Sundays")
             st.link_button("📱 Enroll Now", "https://wa.me/917339315376", use_container_width=True)
 
-==========================================
+#==========================================
 # PAGE: CONTACT
 # ==========================================
 elif st.session_state.page == "Contact":
@@ -980,3 +980,4 @@ with st.container(border=True):
         "</div>", 
         unsafe_allow_html=True
     )
+
