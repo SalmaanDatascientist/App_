@@ -1270,10 +1270,10 @@ if st.session_state.logged_in:
 else:
     show_login_page()
         # --- TAB 2: MOCK TEST (INTEGRATED) ---
-        with tab2:
-            st.markdown("### 📝 AI Mock Test Generator")
+    with tab2:
+        st.markdown("### 📝 AI Mock Test Generator")
             
-            api_key = st.secrets.get("GROQ_API_KEY")
+        api_key = st.secrets.get("GROQ_API_KEY")
             if not api_key:
                 st.error("API Key Missing")
             else:
