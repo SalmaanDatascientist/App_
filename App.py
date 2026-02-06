@@ -466,7 +466,8 @@ elif st.session_state.page == "Mock_Test":
                 for q in st.session_state.mt_questions:
                     st.markdown(f"**Q{q['id']}. {q['question']}**")
                     if st.session_state.mt_q_type == "MCQ":
-                        st.radio("Choose:", q['options'], key=f"q_{q['id']}", label_visibility="collapsed")
+                        # FIXED: Added index=None so no option is pre-selected
+                        st.radio("Choose:", q['options'], key=f"q_{q['id']}", label_visibility="collapsed", index=None)
                     else:
                         st.text_area("Answer:", key=f"q_{q['id']}")
                     st.markdown("---")
@@ -474,16 +475,26 @@ elif st.session_state.page == "Mock_Test":
                 submitted = st.form_submit_button("✅ Submit Exam")
             
             if submitted:
-                answers = {str(q['id']): st.session_state.get(f"q_{q['id']}") for q in st.session_state.mt_questions}
-                prompt = f"Grade this student. Questions: {json.dumps(st.session_state.mt_questions)}. Answers: {json.dumps(answers)}."
-                with st.spinner("Grading..."):
-                    res = client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=0.3
-                    )
-                    st.session_state.mt_feedback = res.choices[0].message.content
-                    st.rerun()
+                # Validation and Grading
+                answers = {}
+                all_answered = True
+                for q in st.session_state.mt_questions:
+                    val = st.session_state.get(f"q_{q['id']}")
+                    if not val: all_answered = False
+                    answers[str(q['id'])] = val
+                
+                if not all_answered and st.session_state.mt_q_type == "MCQ":
+                    st.error("Please answer all questions.")
+                else:
+                    prompt = f"Grade this student. Questions: {json.dumps(st.session_state.mt_questions)}. Answers: {json.dumps(answers)}."
+                    with st.spinner("Grading..."):
+                        res = client.chat.completions.create(
+                            model="llama-3.3-70b-versatile",
+                            messages=[{"role": "user", "content": prompt}],
+                            temperature=0.3
+                        )
+                        st.session_state.mt_feedback = res.choices[0].message.content
+                        st.rerun()
 
 # ==========================================
 # PAGE: LIVE CLASS
@@ -655,10 +666,53 @@ elif st.session_state.page == "Contact":
                         except: st.error("Connection Error")
                     else: st.warning("Please fill details")
 
-# Footer
+# -----------------------------------------------------------------------------
+# FOOTER
+# -----------------------------------------------------------------------------
 st.write("")
-st.markdown("""
-    <div style='text-align: center; color: rgba(255,255,255,0.5); padding: 20px;'>
-        <p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
-    </div>
-""", unsafe_allow_html=True)
+st.write("")
+with st.container(border=True):
+    # 1. CSS Animation Logic
+    st.markdown("""
+        <style>
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .animated-footer-text {
+            font-weight: 800;
+            font-size: 24px;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 2px;
+            /* The Color Gradient: Add more colors here if you want */
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 300%;
+            
+            /* Clip the background to the text */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; 
+            background-clip: text;
+            color: transparent;
+            
+            /* The Animation Speed */
+            animation: gradient-animation 10s ease infinite;
+        }
+        </style>
+        
+        <div class="animated-footer-text">
+            PRECISE • PASSIONATE • PROFESSIONAL
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # The Copyright Caption
+    st.markdown(
+        "<div style='text-align: center; color: gray; font-size: 12px; margin-top: 10px;'>"
+        "© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M. All Rights Reserved."
+        "</div>", 
+        unsafe_allow_html=True
+    )
+
+
