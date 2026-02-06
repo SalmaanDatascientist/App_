@@ -820,118 +820,78 @@ elif st.session_state.page == "Bootcamp":
 #==========================================
 # PAGE: CONTACT
 # ==========================================
+# ==========================================
+# PAGE: CONTACT (DEBUG VERSION)
+# ==========================================
 elif st.session_state.page == "Contact":
     st.markdown("# 📞 Get In Touch")
-    
     c1, c2 = st.columns([1, 1])
     
     with c1:
         with st.container(border=True):
             st.markdown("### Contact Information")
-            st.write("")
+            st.markdown("**📱 Phone:** +91 73393 15376")
+            st.markdown("**✉️ Email:** the.molecularmanexpert@gmail.com")
             
-            st.markdown("**📱 Phone**")
-            st.write("+91 73393 15376")
-            st.write("")
+            # Manual Mailto Link
+            st.markdown("""
+            <a href="mailto:the.molecularmanexpert@gmail.com?subject=Inquiry from Student">
+                <button style="background-color:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; cursor:pointer;">
+                    📧 Click to Email Directly
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
             
-            st.markdown("**✉️ Email**")
-            st.markdown(
-                """
-                <div style="
-                    display: inline-block;
-                    background-color: #ffffff;
-                    padding: 10px 20px;
-                    border-radius: 25px;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                    border: 1px solid #e0e0e0;
-                ">
-                    <a href="mailto:the.molecularmanexpert@gmail.com" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 20px;">✉️</span>
-                        <span style="
-                            color: #333333 !important;
-                            font-weight: bold;
-                            font-size: 16px;
-                            font-family: sans-serif;
-                        ">
-                            the.molecularmanexpert@gmail.com
-                        </span>
-                    </a>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
             st.write("")
-            
-            st.markdown("**🕒 Operating Hours**")
-            st.write("Monday - Saturday: 9:00 AM - 9:00 PM")
-            st.write("Sunday: Closed (AI Support Available 24/7)")
-            st.write("")
-            
-            st.link_button("💬 WhatsApp Us", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
-    
+            st.link_button("💬 WhatsApp Us", "https://wa.me/917339315376", use_container_width=True)
+
     with c2:
         with st.container(border=True):
             st.markdown("### Send us a Message")
             
-            # UNIQUE KEY for this form to prevent duplicate key errors
-            with st.form("contact_page_form_unique"):
-                name = st.text_input("Your Name")
-                phone = st.text_input("Phone Number")
-                email = st.text_input("Email (Optional)")
-                grade = st.selectbox("Student's Grade", 
-                    ["6-8", "9-10", "11-12 (Science)", "11-12 (Commerce)", "College/Other"])
-                message = st.text_area("Message", height=120)
+            # Form
+            with st.form("contact_form_debug"):
+                name = st.text_input("Name")
+                phone = st.text_input("Phone")
+                msg = st.text_area("Message")
                 
-                # CORRECTED INDENTATION: Button inside the form
-                submitted = st.form_submit_button("Send Message", use_container_width=True)
+                # Hidden honey-pot field to prevent bot spam (FormSubmit feature)
+                # We don't display it, but we send it empty.
+                
+                submit_btn = st.form_submit_button("Send Message", use_container_width=True)
 
-                if submitted:
+                if submit_btn:
                     if name and phone:
-                        try:
-                            # 1. Prepare data
-                            form_data = {
-                                "name": name,
-                                "phone": phone,
-                                "email": email,
-                                "grade": grade,
-                                "message": message,
-                                "_subject": f"New Inquiry from {name}",
-                                "_captcha": "false"
-                            }
-
-                            # 2. Send to FormSubmit
-                            # URL is constructed safely by joining strings to guarantee no hidden spaces
-                            url = "https://" + "formsubmit.co/the.molecularmanexpert@gmail.com"
-                            response = requests.post(url, data=form_data)
-
-                            # 3. Success Message
-                            if response.status_code == 200:
-                                st.markdown(
-                                    """
-                                    <div style="
-                                        background-color: #a7e4d8; 
-                                        padding: 15px; 
-                                        border-radius: 10px; 
-                                        color: black; 
-                                        font-weight: bold; 
-                                        border: 1px solid #6ccec0;
-                                        margin-top: 10px;
-                                    ">
-                                        ✅ Thank you! We'll contact you within 24 hours.
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
-                                st.balloons()
-                            else:
-                                st.error("⚠️ Connection error. Please try again.")
+                        # 1. Prepare Payload
+                        url = "https://formsubmit.co/the.molecularmanexpert@gmail.com"
+                        payload = {
+                            "name": name,
+                            "phone": phone,
+                            "message": msg,
+                            "_subject": f"New Lead: {name}",
+                            "_captcha": "false",
+                            "_template": "table" 
+                        }
                         
+                        try:
+                            # 2. Send Request
+                            response = requests.post(url, data=payload)
+                            
+                            # 3. DIAGNOSTIC OUTPUT
+                            if response.status_code == 200:
+                                st.success("✅ Success! Server accepted the form.")
+                                st.balloons()
+                                # Check if activation is pending
+                                if "Action Required" in response.text:
+                                    st.warning("⚠️ ACTION REQUIRED: Check your Gmail (and Spam folder) to Activate FormSubmit for the first time.")
+                            else:
+                                st.error(f"❌ Error {response.status_code}")
+                                st.code(response.text) # This will show you EXACTLY why it failed
+                                
                         except Exception as e:
-                            st.error(f"⚠️ Error: {e}")
-
+                            st.error(f"Connection Error: {e}")
                     else:
-                        st.warning("⚠️ Please fill in your name and phone number.")
-
+                        st.warning("Please fill in Name and Phone.")
 # -----------------------------------------------------------------------------
 # FOOTER
 # -----------------------------------------------------------------------------
@@ -980,4 +940,5 @@ with st.container(border=True):
         "</div>", 
         unsafe_allow_html=True
     )
+
 
