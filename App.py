@@ -97,127 +97,138 @@ def get_live_status():
 # -----------------------------------------------------------------------------
 # 4. CSS STYLING
 # -----------------------------------------------------------------------------
-# HTML/CSS strings must be flush left to avoid code block rendering
 st.markdown("""
 <style>
-.stApp {
-    background: linear-gradient(135deg, #004e92 0%, #000428 100%) !important;
-    background-attachment: fixed;
-}
-.block-container {
-    padding-top: 1rem !important;
-    padding-bottom: 5rem !important;
-}
-h1, h2, h3, h4, h5, h6, p, div, span, li, label, .stMarkdown {
-    color: #ffffff !important;
-}
-div.stButton > button {
-    background: linear-gradient(90deg, #1e3a5f, #3b6b9e, #1e3a5f);
-    color: white !important; border-radius: 25px !important; border: 1px solid rgba(255,255,255,0.2) !important;
-}
-div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-div[data-testid="stFormSubmitButton"] > button {
-    background: #1e3a5f !important; color: #ffffff !important; border: 2px solid white !important;
-}
-div[data-testid="stFormSubmitButton"] > button p { color: #ffffff !important; }
-.stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div {
-    background-color: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3) !important;
-}
-#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
-.stDeployButton {display: none;}
+    /* GLOBAL STYLES */
+    .stApp {
+        background: linear-gradient(135deg, #004e92 0%, #000428 100%) !important;
+        background-attachment: fixed;
+    }
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 5rem !important;
+    }
+    h1, h2, h3, h4, h5, h6, p, div, span, li, label, .stMarkdown {
+        color: #ffffff !important;
+    }
+    
+    /* BUTTONS */
+    div.stButton > button {
+        background: linear-gradient(90deg, #1e3a5f, #3b6b9e, #1e3a5f);
+        color: white !important; border-radius: 25px !important; border: 1px solid rgba(255,255,255,0.2) !important;
+    }
+    div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    div[data-testid="stFormSubmitButton"] > button {
+        background: #1e3a5f !important; color: #ffffff !important; border: 2px solid white !important;
+    }
+    div[data-testid="stFormSubmitButton"] > button p { color: #ffffff !important; }
+    
+    /* INPUTS */
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div {
+        background-color: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3) !important;
+    }
+    
+    /* UTILS */
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+    .stDeployButton {display: none;}
+    
+    /* --- HERO AD BANNER --- */
+    @keyframes neon-pulse {
+        0% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ffd700 inset; border-color: #ffd700; }
+        50% { box-shadow: 0 0 20px #00ffff, 0 0 10px #00ffff inset; border-color: #00ffff; }
+        100% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ffd700 inset; border-color: #ffd700; }
+    }
+    .hero-ad-box {
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(12px);
+        border: 2px solid #ffd700;
+        border-radius: 20px;
+        padding: 40px 20px;
+        margin: 30px 0;
+        text-align: center;
+        animation: neon-pulse 4s infinite alternate;
+    }
+    .hero-headline {
+        font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
+        background: linear-gradient(to right, #ffffff, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 15px;
+    }
+    .hero-subhead { font-size: 18px; color: #e0e0e0; margin-bottom: 25px; font-weight: 300; }
+    .hero-suite-title {
+        font-size: 22px; color: #00ffff; font-weight: 800; text-transform: uppercase; margin-bottom: 20px;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    .hero-feature-grid { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
+    .hero-feature-item {
+        background: rgba(255, 255, 255, 0.05); padding: 15px 25px; border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1); text-align: left; max-width: 400px;
+    }
+    .hero-footer {
+        font-size: 14px; font-weight: 800; color: #ff4d4d; letter-spacing: 1.5px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px; margin-top: 10px;
+    }
 
-/* --- HERO AD BANNER --- */
-@keyframes neon-pulse {
-    0% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ffd700 inset; border-color: #ffd700; }
-    50% { box-shadow: 0 0 20px #00ffff, 0 0 10px #00ffff inset; border-color: #00ffff; }
-    100% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ffd700 inset; border-color: #ffd700; }
-}
-.hero-ad-box {
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(12px);
-    border: 2px solid #ffd700;
-    border-radius: 20px;
-    padding: 40px 20px;
-    margin: 30px 0;
-    text-align: center;
-    animation: neon-pulse 4s infinite alternate;
-}
-.hero-headline {
-    font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
-    background: linear-gradient(to right, #ffffff, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 15px;
-}
-.hero-subhead { font-size: 18px; color: #e0e0e0; margin-bottom: 25px; font-weight: 300; }
-.hero-suite-title {
-    font-size: 22px; color: #00ffff; font-weight: 800; text-transform: uppercase; margin-bottom: 20px;
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-}
-.hero-feature-grid { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
-.hero-feature-item {
-    background: rgba(255, 255, 255, 0.05); padding: 15px 25px; border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1); text-align: left; max-width: 400px;
-}
-.hero-footer {
-    font-size: 14px; font-weight: 800; color: #ff4d4d; letter-spacing: 1.5px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px; margin-top: 10px;
-}
-
-/* --- ANIMATED FOUNDER HEADER --- */
-@keyframes border-flow {
-    0% { border-color: #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
-    50% { border-color: #3a7bd5; box-shadow: 0 0 25px rgba(58, 123, 213, 0.5); }
-    100% { border-color: #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
-}
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translate3d(0, 20px, 0); }
-    to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-.founder-header-container {
-    text-align: center;
-    padding: 35px 20px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 30px;
-    position: relative;
-    overflow: hidden;
-    animation: border-flow 4s infinite alternate;
-}
-.founder-headline {
-    font-family: 'Helvetica Neue', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 800;
-    background: linear-gradient(to right, #ffffff, #a1c4fd);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 12px;
-    animation: fadeInUp 0.8s ease-out forwards;
-}
-.founder-subhead {
-    font-size: 1.1rem;
-    color: #d1d5db;
-    margin-bottom: 15px;
-    font-weight: 400;
-    opacity: 0; /* Hidden initially */
-    animation: fadeInUp 0.8s ease-out 0.3s forwards; /* Delay */
-}
-.founder-tagline {
-    font-size: 0.95rem;
-    color: #ffd700;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    opacity: 0; /* Hidden initially */
-    animation: fadeInUp 0.8s ease-out 0.6s forwards; /* Delay */
-}
+    /* --- ANIMATED FOUNDER HEADER --- */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translate3d(0, 30px, 0); }
+        to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+    @keyframes border-flow {
+        0% { border-color: rgba(255, 215, 0, 0.3); box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+        50% { border-color: rgba(0, 255, 255, 0.5); box-shadow: 0 0 25px rgba(0, 255, 255, 0.2); }
+        100% { border-color: rgba(255, 215, 0, 0.3); box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+    }
+    
+    .founder-header-container {
+        text-align: center;
+        padding: 35px 20px;
+        background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 30px;
+        animation: border-flow 4s infinite alternate;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .founder-headline {
+        font-size: 2.2rem;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        background: linear-gradient(to right, #ffffff 0%, #a1c4fd 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 15px;
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    
+    .founder-subhead {
+        font-size: 1.2rem;
+        color: #e2e8f0;
+        font-weight: 400;
+        margin-bottom: 15px;
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out 0.3s forwards;
+    }
+    
+    .founder-tagline {
+        font-size: 1rem;
+        color: #ffd700;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out 0.6s forwards;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 5. NAVIGATION
+# 5. NAVIGATION (With Animated Header)
 # -----------------------------------------------------------------------------
-# IMPORTANT: HTML strings are FLUSH LEFT to prevent code-block rendering
+# Using flush-left HTML to avoid code blocks
 st.markdown("""
 <div class="founder-header-container">
 <div class="founder-headline">Other Apps Were Coded by Engineers. This One Was Coded by Your Master Tutor - Mohammed Salmaan.</div>
@@ -279,7 +290,7 @@ if st.session_state.page == "Home":
             st.write("")
             st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
-    # 2. FIXED DYNAMIC ADVERTISEMENT (No Indentation for HTML content)
+    # 2. DYNAMIC ADVERTISEMENT
     st.markdown("""
 <div class="hero-ad-box">
 <div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
