@@ -170,11 +170,11 @@ def set_live_status(is_live, topic="", link=""):
 def get_groq_client_wrapper(api_key):
     return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
 
-# --- AYA LOGIC (From aya.py) ---
+
+# --- AYA LOGIC (Updated from aya.py) ---
 def solve_problem_aya(api_key, question_text, file_obj=None, file_type=None):
     try:
-        client = get_groq_client_wrapper(api_key)
-        groq_client = Groq(api_key=api_key) # Native Groq client for Vision models
+        groq_client = Groq(api_key=api_key)
 
         base_prompt = """### ROLE DEFINITION
 You are **Aya**, the Lead AI Tutor at **The Molecular Man Expert Tuition Solutions**. 
@@ -204,70 +204,81 @@ Before answering, assess the complexity.
                 
                 prompt = base_prompt + "\n\nSOLVE THE PROBLEM IN THIS IMAGE:"
                 
-                # Using Native Groq Client for Vision
-                model = "llama-3.2-11b-vision-preview" # Fallback if 90b fails
-                try:
-                    message = groq_client.chat.completions.create(
-                        model="llama-3.2-90b-vision-preview",
-                        messages=[{
-                            "role": "user", 
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
-                            ]
-                        }],
-                        max_tokens=1024,
-                        temperature=0.5
-                    )
-                    return message.choices[0].message.content
-                except:
-                     # Retry with smaller model
-                    message = groq_client.chat.completions.create(
-                        model=model,
-                        messages=[{
-                            "role": "user", 
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
-                            ]
-                        }],
-                        max_tokens=1024,
-                        temperature=0.5
-                    )
-                    return message.choices[0].message.content
+                # Try larger vision model first
+                for model in ["llama-3.2-90b-vision-preview", "llama-3.2-11b-vision-preview"]:
+                    try:
+                        message = groq_client.chat.completions.create(
+                            model=model,
+                            messages=[{
+                                "role": "user", 
+                                "content": [
+                                    {"type": "text", "text": prompt},
+                                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
+                                ]
+                            }],
+                            max_tokens=1024,
+                            temperature=0.5
+                        )
+                        return message.choices[0].message.content
+                    except:
+                        continue
 
             except Exception as e:
-                return f"Error processing image: {str(e)}"
+                return f"❌ Error processing image: {str(e)}"
         
         elif file_type == "pdf" and file_obj:
             try:
                 pdf_reader = PyPDF2.PdfReader(file_obj)
                 pdf_text = ""
-                for page_num in range(min(2, len(pdf_reader.pages))):
-                    page = pdf_reader.pages[page_num]
-                    pdf_text += page.extract_text()[:1000]
+                for page_num in range(min(3, len(pdf_reader.pages))):
+                    try:
+                        page = pdf_reader.pages[page_num]
+                        page_text = page.extract_text()
+                        if page_text:
+                            pdf_text += page_text[:2000]
+                            if len(pdf_text) >= 1500:
+                                break
+                    except:
+                        continue
                 
-                prompt = base_prompt + f"\n\nPROBLEM from PDF:\n{pdf_text}"
+                if not pdf_text:
+                    return "❌ Could not extract text from PDF. The file may be image-based."
+                
+                prompt = base_prompt + f"\n\nPROBLEM FROM PDF:\n{pdf_text}"
+                for model in ["llama-3.1-70b-versatile", "llama-3.1-8b-instant", "gemma-7b-it"]:
+                    try:
+                        message = groq_client.chat.completions.create(
+                            model=model,
+                            messages=[{"role": "user", "content": prompt}],
+                            max_tokens=1024,
+                            temperature=0.5
+                        )
+                        return message.choices[0].message.content
+                    except:
+                        continue
             except Exception as e:
-                return f"Error reading PDF: {str(e)}"
+                return f"❌ Error reading PDF: {str(e)}"
+        
         else:
             prompt = base_prompt + f"\n\nPROBLEM:\n{question_text}"
-
-        # Text generation for PDF/Text
-        models = ["llama-3.1-70b-versatile", "llama-3.1-8b-instant", "gemma-7b-it"]
-        for model in models:
-            try:
-                resp = client.chat.completions.create(
-                    model=model, messages=[{"role": "user", "content": prompt}], temperature=0.5
-                )
-                return resp.choices[0].message.content
-            except: continue
-        return "Error: AI Service Unavailable."
-
+            for model in ["llama-3.1-70b-versatile", "llama-3.1-8b-instant", "gemma-7b-it"]:
+                try:
+                    message = groq_client.chat.completions.create(
+                        model=model,
+                        messages=[{"role": "user", "content": prompt}],
+                        max_tokens=1024,
+                        temperature=0.5
+                    )
+                    return message.choices[0].message.content
+                except:
+                    continue
+        
+        return "❌ Error: Could not connect to AI services. Please try again."
+    
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"❌ Error: {str(e)}"
 
-# --- MOCK TEST LOGIC (From mt.py) ---
+# --- MOCK TEST LOGIC (Updated from mt.py) ---
 def clean_input(text):
     if not text: return ""
     return text.encode('ascii', 'ignore').decode('ascii').strip()
@@ -300,7 +311,7 @@ def generate_test_questions(api_key, model, board, cls, sub, chap, num, diff, q_
                 "correct_answer": "Option A"
             }}
         ]
-        VERIFICATION STEP: Before outputting, check that 'correct_answer' matches one of the 'options' exactly.
+        VERIFICATION STEP: Before outputting, check that 'correct_answer' matches one of the 'options' exactly and is factually true.
         Return ONLY raw JSON.
         """
     else: # Descriptive
@@ -319,15 +330,22 @@ def generate_test_questions(api_key, model, board, cls, sub, chap, num, diff, q_
         ]
         Return ONLY raw JSON.
         """
-    
+
     try:
         response = client.chat.completions.create(
-            model=model, messages=[{"role": "user", "content": prompt}], temperature=0.1
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a precise academic assistant. You do not hallucinate facts. You output strictly valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1 
         )
         content = response.choices[0].message.content.strip()
-        if "```" in content: content = content.replace("```json", "").replace("```", "")
+        if "```" in content:
+            content = content.replace("```json", "").replace("```", "")
         return json.loads(content)
     except Exception as e:
+        st.error(f"Error generating questions: {str(e)}")
         return None
 
 def grade_mcq(api_key, model, questions, user_answers, board, cls, sub):
@@ -360,7 +378,9 @@ def grade_mcq(api_key, model, questions, user_answers, board, cls, sub):
     """
     try:
         response = client.chat.completions.create(
-            model=model, messages=[{"role": "user", "content": prompt}], temperature=0.3
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
         )
         return response.choices[0].message.content
     except Exception as e:
@@ -393,14 +413,24 @@ def grade_descriptive(api_key, model, questions, user_answers, board, cls, sub):
     3. Provide "Scope for Improvement" pointing out missing keywords or concepts.
     4. Format clearly in Markdown.
     """
+
     try:
         response = client.chat.completions.create(
-            model=model, messages=[{"role": "user", "content": prompt}], temperature=0.2
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2
         )
         return response.choices[0].message.content
     except Exception as e:
         return f"Error grading descriptive answers: {str(e)}"
 
+def fetch_available_models(api_key):
+    try:
+        client = get_groq_client_wrapper(api_key)
+        models = client.models.list()
+        return sorted([m.id for m in models.data])
+    except Exception:
+        return []
 
 # -----------------------------------------------------------------------------
 # 4. CSS STYLING & FOUNDER HEADER
