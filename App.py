@@ -637,12 +637,20 @@ elif st.session_state.page == "Live Class":
                     
                     if status["is_live"]:
                         st.success(f"✅ Class is LIVE: {status['topic']}")
-                        st.markdown(f"**Current Link:** {status['link']}")
+                        
+                        # Fix displaying link
+                        raw_link = status['link'].strip()
+                        if not raw_link.startswith("http://") and not raw_link.startswith("https://"):
+                            final_display_link = "https://" + raw_link
+                        else:
+                            final_display_link = raw_link
+
+                        st.markdown(f"**Current Link:** {final_display_link}")
                         
                         # Direct Link Button
                         st.markdown(f"""
                             <div style="text-align:center; margin: 20px;">
-                                <a href="{status['link']}" target="_blank" style="text-decoration:none;">
+                                <a href="{final_display_link}" target="_blank" style="text-decoration:none;">
                                     <button style="background: linear-gradient(45deg, #00c853, #b2ff59); color: black; padding: 15px 30px; border: none; border-radius: 50px; font-weight: bold; font-size: 18px; cursor: pointer;">
                                         🎥 Enter Meeting
                                     </button>
@@ -662,6 +670,10 @@ elif st.session_state.page == "Live Class":
                             
                             if st.form_submit_button("Go Live 📡"):
                                 if topic and meet_link:
+                                    # FIX: Auto-correct link if missing https://
+                                    if not meet_link.startswith("http://") and not meet_link.startswith("https://"):
+                                        meet_link = "https://" + meet_link
+
                                     set_live_status(True, topic, meet_link)
                                     add_notification(f"🔴 Live Class Started: {topic}. Join now!")
                                     st.rerun()
@@ -688,6 +700,13 @@ elif st.session_state.page == "Live Class":
             status = get_live_status()
             
             if status["is_live"]:
+                # FIX: Ensure link works for students
+                raw_link = status['link'].strip()
+                if not raw_link.startswith("http://") and not raw_link.startswith("https://"):
+                    final_link = "https://" + raw_link
+                else:
+                    final_link = raw_link
+
                 # Direct link button for Students
                 st.markdown(f"""
                 <div style="background: rgba(255, 0, 0, 0.1); border: 2px solid red; padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 20px;">
@@ -695,7 +714,7 @@ elif st.session_state.page == "Live Class":
                     <h2 style="color: white !important; margin-top: 10px;">Topic: {status['topic']}</h2>
                     <br>
                     <div class="live-button-container">
-                        <a href="{status['link']}" target="_blank" style="text-decoration:none;">
+                        <a href="{final_link}" target="_blank" style="text-decoration:none;">
                             <button style="background: linear-gradient(45deg, #ff0000, #ff5252); color: white; padding: 20px 40px; border: none; border-radius: 50px; font-weight: bold; font-size: 24px; cursor: pointer; box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);">
                                 👉 CLICK TO JOIN CLASS
                             </button>
@@ -978,6 +997,7 @@ with st.container(border=True):
         "</div>", 
         unsafe_allow_html=True
     )
+
 
 
 
