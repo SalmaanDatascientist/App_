@@ -3,6 +3,8 @@ import os
 import json
 import base64
 import datetime
+import uuid
+import requests
 from PIL import Image
 from groq import Groq
 from openai import OpenAI
@@ -29,20 +31,16 @@ st.set_page_config(
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
-# Default user to Guest/Student since auth is removed
 if "username" not in st.session_state:
     st.session_state.username = "Student"
 
-# AI Tutor State
 if "aya_messages" not in st.session_state:
     st.session_state.aya_messages = []
 
-# Mock Test State
 if 'mt_questions' not in st.session_state: st.session_state.mt_questions = None
 if 'mt_answers' not in st.session_state: st.session_state.mt_answers = {}
 if 'mt_feedback' not in st.session_state: st.session_state.mt_feedback = None
 
-# Files (Only keeping Notifications/Live Status)
 NOTIFICATIONS_FILE = "notifications.json"
 LIVE_STATUS_FILE = "live_status.json"
 
@@ -101,7 +99,6 @@ def get_live_status():
 # -----------------------------------------------------------------------------
 st.markdown("""
 <style>
-    /* Main Background Gradient */
     .stApp {
         background: linear-gradient(135deg, #004e92 0%, #000428 100%) !important;
         background-attachment: fixed;
@@ -110,58 +107,30 @@ st.markdown("""
         padding-top: 1rem !important;
         padding-bottom: 5rem !important;
     }
-    
-    /* Text Color Fixes */
     h1, h2, h3, h4, h5, h6, p, div, span, li, label, .stMarkdown {
         color: #ffffff !important;
     }
-
-    /* Founder Header Animation */
-    @keyframes flash-pulse {
-        0% { opacity: 1; transform: scale(1); text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        50% { opacity: 0.85; transform: scale(1.01); text-shadow: 0 0 15px rgba(255, 255, 255, 0.8); }
-        100% { opacity: 1; transform: scale(1); text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-    }
-    .founder-header-container {
-        text-align: center; padding: 25px 15px; background: rgba(0, 0, 0, 0.2);
-        border-radius: 20px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    .founder-headline {
-        font-size: 2.2rem; font-weight: 900; color: #ffffff; margin-bottom: 12px;
-        animation: flash-pulse 2.5s infinite ease-in-out;
-    }
-    .founder-subhead { font-size: 1.2rem; color: #e0f7fa; font-weight: 500; }
-    .founder-tagline { color: #ffd700; font-style: italic; font-weight: 800; letter-spacing: 1.5px; }
-
-    /* Button Styling */
     div.stButton > button {
         background: linear-gradient(90deg, #1e3a5f, #3b6b9e, #1e3a5f);
         color: white !important; border-radius: 25px !important; border: 1px solid rgba(255,255,255,0.2) !important;
     }
     div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    
-    /* Submit Button Specific Fix */
     div[data-testid="stFormSubmitButton"] > button {
         background: #1e3a5f !important; color: #ffffff !important; border: 2px solid white !important;
     }
     div[data-testid="stFormSubmitButton"] > button p { color: #ffffff !important; }
-
-    /* Inputs */
     .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div {
         background-color: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3) !important;
     }
-    
-    /* Hide Menu */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     .stDeployButton {display: none;}
     
-    /* --- NEW AESTHETIC AD BANNER STYLE --- */
+    /* --- HERO AD BANNER --- */
     @keyframes neon-pulse {
         0% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ffd700 inset; border-color: #ffd700; }
         50% { box-shadow: 0 0 20px #00ffff, 0 0 10px #00ffff inset; border-color: #00ffff; }
         100% { box-shadow: 0 0 5px #ffd700, 0 0 15px #ffd700 inset; border-color: #ffd700; }
     }
-    
     .hero-ad-box {
         background: rgba(0, 0, 0, 0.7);
         backdrop-filter: blur(12px);
@@ -171,71 +140,40 @@ st.markdown("""
         margin: 30px 0;
         text-align: center;
         animation: neon-pulse 4s infinite alternate;
-        position: relative;
-        overflow: hidden;
     }
-    
     .hero-headline {
-        font-size: 32px;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        background: linear-gradient(to right, #ffffff, #ffd700);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
+        background: linear-gradient(to right, #ffffff, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         margin-bottom: 15px;
     }
-    
-    .hero-subhead {
-        font-size: 18px;
-        color: #e0e0e0;
-        margin-bottom: 25px;
-        font-weight: 300;
-        line-height: 1.6;
-    }
-    
+    .hero-subhead { font-size: 18px; color: #e0e0e0; margin-bottom: 25px; font-weight: 300; }
     .hero-suite-title {
-        font-size: 22px;
-        color: #00ffff;
-        font-weight: 800;
-        text-transform: uppercase;
-        margin-bottom: 20px;
+        font-size: 22px; color: #00ffff; font-weight: 800; text-transform: uppercase; margin-bottom: 20px;
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
-    
-    .hero-feature-grid {
-        display: flex;
-        justify-content: center;
-        gap: 30px;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-    }
-    
+    .hero-feature-grid { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
     .hero-feature-item {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 15px 25px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        text-align: left;
-        max-width: 400px;
+        background: rgba(255, 255, 255, 0.05); padding: 15px 25px; border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1); text-align: left; max-width: 400px;
     }
-    
     .hero-footer {
-        font-size: 14px;
-        font-weight: 800;
-        color: #ff4d4d;
-        letter-spacing: 1.5px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        padding-top: 15px;
-        margin-top: 10px;
+        font-size: 14px; font-weight: 800; color: #ff4d4d; letter-spacing: 1.5px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px; margin-top: 10px;
     }
+    /* Founder Header */
+    .founder-header-container {
+        text-align: center; padding: 25px 15px; background: rgba(0, 0, 0, 0.2);
+        border-radius: 20px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .founder-headline { font-size: 2.2rem; font-weight: 900; color: #ffffff; margin-bottom: 12px; }
+    .founder-subhead { font-size: 1.2rem; color: #e0f7fa; font-weight: 500; }
+    .founder-tagline { color: #ffd700; font-style: italic; font-weight: 800; letter-spacing: 1.5px; }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # 5. NAVIGATION
 # -----------------------------------------------------------------------------
-
 st.markdown("""
 <div class="founder-header-container">
     <div class="founder-headline">Other Apps Were Coded by Engineers. This One Was Coded by Your Master Tutor - Mohammed Salmaan.</div>
@@ -244,7 +182,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Navigation Menu
 st.markdown("### 🧭 Main Menu")
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 with col1:
@@ -275,7 +212,7 @@ with ai_col2:
 st.divider()
 
 # -----------------------------------------------------------------------------
-# 6. PAGE LOGIC (MAIN APP)
+# 6. PAGE LOGIC
 # -----------------------------------------------------------------------------
 
 # ==========================================
@@ -283,7 +220,7 @@ st.divider()
 # ==========================================
 if st.session_state.page == "Home":
     
-    # 1. Logo and Intro Section
+    # 1. Logo and Intro
     logo_col1, logo_col2 = st.columns([1, 2])
     with logo_col1:
         with st.container(border=True):
@@ -298,34 +235,34 @@ if st.session_state.page == "Home":
             st.write("")
             st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 
-    # 2. DYNAMIC ADVERTISEMENT (INTEGRATED)
+    # 2. FIXED DYNAMIC ADVERTISEMENT (No Indentation)
     st.markdown("""
-    <div class="hero-ad-box">
-        <div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
-        <div class="hero-subhead">
-            Stop paying for "premium" test series. The corporate coaching giants are scared.
+<div class="hero-ad-box">
+    <div class="hero-headline">🚨 The Education System Just Got a Reality Check</div>
+    <div class="hero-subhead">
+        Stop paying for "premium" test series. The corporate coaching giants are scared.
+    </div>
+    
+    <div class="hero-suite-title">INTRODUCING: THE MOLECULAR MAN AI SUITE</div>
+    
+    <div class="hero-feature-grid">
+        <div class="hero-feature-item">
+            <span style="font-size: 20px; color: #ffd700;">1. 🧠 AyA (AI Tutor)</span><br>
+            <span style="font-size: 16px; color: #e0e0e0;">She doesn't sleep. She solves PDFs & problems instantly.</span>
         </div>
-        
-        <div class="hero-suite-title">INTRODUCING: THE MOLECULAR MAN AI SUITE</div>
-        
-        <div class="hero-feature-grid">
-            <div class="hero-feature-item">
-                <span style="font-size: 20px; color: #ffd700;">1. 🧠 AyA (AI Tutor)</span><br>
-                <span style="font-size: 16px; color: #e0e0e0;">She doesn't sleep. She solves PDFs & problems instantly.</span>
-            </div>
-            <div class="hero-feature-item">
-                <span style="font-size: 20px; color: #ffd700;">2. 📝 Infinite Mock Tests</span><br>
-                <span style="font-size: 16px; color: #e0e0e0;">Generate unlimited tests for ANY Board/Subject for ₹0.</span>
-            </div>
-        </div>
-        
-        <div class="hero-footer">
-            🚫 NO SUBSCRIPTIONS. NO HIDDEN FEES. PURE TEACHING INTELLIGENCE.
+        <div class="hero-feature-item">
+            <span style="font-size: 20px; color: #ffd700;">2. 📝 Infinite Mock Tests</span><br>
+            <span style="font-size: 16px; color: #e0e0e0;">Generate unlimited tests for ANY Board/Subject for ₹0.</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    
+    <div class="hero-footer">
+        🚫 NO SUBSCRIPTIONS. NO HIDDEN FEES. PURE TEACHING INTELLIGENCE.
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-    # 3. Rest of the content
+    # 3. Stats
     st.markdown("## 📊 Our Impact")
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("Students Taught", "500+")
@@ -355,7 +292,6 @@ elif st.session_state.page == "AyA_AI":
     st.markdown("## 🧠 AyA - The Molecular Man AI")
     st.caption("Your personal AI Tutor for Math, Science, and Coding.")
 
-    # API Setup
     try:
         groq_api_key = st.secrets["GROQ_API_KEY"]
         groq_client = Groq(api_key=groq_api_key)
@@ -369,7 +305,6 @@ elif st.session_state.page == "AyA_AI":
     Structure: 🧠 CONCEPT -> 🌍 CONTEXT -> ✍️ SOLUTION -> ✅ ANSWER -> 🚀 HERO TIP.
     """
 
-    # --- INPUT AREA ---
     with st.expander("📝 New Problem Input", expanded=(len(st.session_state.aya_messages) == 0)):
         input_type = st.radio("Input Method:", ["📄 Text Problem", "📕 Upload PDF"], horizontal=True)
         
@@ -390,19 +325,16 @@ elif st.session_state.page == "AyA_AI":
                         pdf_text = ""
                         for page_num in range(min(2, len(pdf_reader.pages))):
                             pdf_text += pdf_reader.pages[page_num].extract_text()[:3000]
-                        
                         st.session_state.aya_messages = [] 
                         st.session_state.aya_messages.append({"role": "user", "content": f"PROBLEM from PDF:\n{pdf_text}"})
                         st.rerun()
                     except Exception as e:
                         st.error(f"Error: {e}")
 
-    # --- CHAT DISPLAY ---
     for msg in st.session_state.aya_messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    # --- GENERATE RESPONSE ---
     if st.session_state.aya_messages and st.session_state.aya_messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
             with st.spinner("🤖 AyA is thinking..."):
@@ -420,7 +352,6 @@ elif st.session_state.page == "AyA_AI":
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
 
-    # Follow-up
     if st.session_state.aya_messages:
         if user_input := st.chat_input("Ask a follow-up..."):
             st.session_state.aya_messages.append({"role": "user", "content": user_input})
@@ -433,14 +364,12 @@ elif st.session_state.page == "Mock_Test":
     st.markdown("## 📝 AI Mock Test Generator")
     st.caption("Generate unlimited tests for any Board, Subject, or Difficulty.")
     
-    # API Setup
     api_key = st.secrets.get("GROQ_API_KEY")
     if not api_key:
         st.error("Missing API Key"); st.stop()
     
     client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
 
-    # Functions
     def get_questions_json(board, cls, sub, chap, num, diff, q_type):
         safe_sub = sub.encode('ascii', 'ignore').decode('ascii').strip()
         if q_type == "MCQ":
@@ -465,7 +394,6 @@ elif st.session_state.page == "Mock_Test":
             return json.loads(content)
         except: return None
 
-    # Config
     if not st.session_state.mt_questions:
         with st.container(border=True):
             c1, c2 = st.columns(2)
@@ -488,7 +416,6 @@ elif st.session_state.page == "Mock_Test":
                     st.session_state.mt_feedback = None
                     st.rerun()
 
-    # Interface
     else:
         if st.session_state.mt_feedback:
             st.success("Test Analysis Complete")
@@ -501,7 +428,6 @@ elif st.session_state.page == "Mock_Test":
                 for q in st.session_state.mt_questions:
                     st.markdown(f"**Q{q['id']}. {q['question']}**")
                     if st.session_state.mt_q_type == "MCQ":
-                        # FIXED: Added index=None so no option is pre-selected
                         st.radio("Choose:", q['options'], key=f"q_{q['id']}", label_visibility="collapsed", index=None)
                     else:
                         st.text_area("Answer:", key=f"q_{q['id']}")
@@ -510,7 +436,6 @@ elif st.session_state.page == "Mock_Test":
                 submitted = st.form_submit_button("✅ Submit Exam")
             
             if submitted:
-                # Validation and Grading
                 answers = {}
                 all_answered = True
                 for q in st.session_state.mt_questions:
@@ -537,7 +462,6 @@ elif st.session_state.page == "Mock_Test":
 elif st.session_state.page == "Live Class":
     st.markdown("# 🔴 Molecular Man Live Classroom")
     
-    # Simple check if there is a live session active
     status = get_live_status()
     if status["is_live"]:
         st.markdown(f"""
