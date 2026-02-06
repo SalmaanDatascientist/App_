@@ -1,0 +1,6 @@
+streamlit
+openai
+groq
+requests
+Pillow
+PyPDF2
