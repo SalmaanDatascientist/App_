@@ -850,54 +850,38 @@ elif st.session_state.page == "Services":
 # PAGE: TESTIMONIALS
 # ==========================================
 elif st.session_state.page == "Testimonials":
-    # Custom CSS to force BLACK text on WHITE cards
-    st.markdown("""
-    <style>
-        .review-card {
-            background-color: #ffffff !important;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            border-left: 5px solid #2c5282;
-            color: #000000 !important; /* Force Black Text */
-        }
-        .review-text {
-            font-size: 16px;
-            font-style: italic;
-            color: #333333 !important; /* Dark Grey Text */
-            line-height: 1.5;
-        }
-        .review-author {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #2c5282 !important; /* Navy Blue Author Name */
-            text-align: right;
-        }
-        /* Metrics Box Styling */
-        .metric-card {
-            background-color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            color: black !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .metric-value { font-size: 28px; font-weight: bold; color: black; }
-        .metric-label { font-size: 14px; color: #555; }
-    </style>
-    """, unsafe_allow_html=True)
-
     st.markdown("# 💬 Student Success Stories")
     
     t1, t2 = st.columns(2)
     
-    # Function to render the clean card
     def testimonial_card(text, author):
+        # FIX: Added 'color: #333333 !important' to force dark text over the white background
         st.markdown(f"""
-        <div class="review-card">
-            <div class="review-text">"{text}"</div>
-            <div class="review-author">- {author}</div>
+        <div style="
+            background-color: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            border-left: 5px solid #2c5282; 
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        ">
+            <div style="
+                color: #333333 !important; 
+                font-style: italic; 
+                font-size: 16px; 
+                line-height: 1.5;
+                margin-bottom: 10px;
+            ">
+                "{text}"
+            </div>
+            <div style="
+                color: #2c5282 !important; 
+                font-weight: bold; 
+                text-align: right;
+                font-size: 14px;
+            ">
+                - {author}
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -914,33 +898,80 @@ elif st.session_state.page == "Testimonials":
     st.write("")
     st.markdown("## 🏆 Our Results")
     
+    # Custom CSS for metrics to ensure they are readable
+    st.markdown("""
+    <style>
+        .metric-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .metric-label { color: #555555 !important; font-size: 14px; font-weight: bold; }
+        .metric-value { color: #000000 !important; font-size: 32px; font-weight: 800; margin: 10px 0; }
+        .metric-sub { color: #666666 !important; font-size: 12px; }
+    </style>
+    """, unsafe_allow_html=True)
+    
     r1, r2, r3 = st.columns(3)
     
     with r1:
-        st.markdown('<div class="metric-card"><div class="metric-label">Board Exams(Including IGCSE,ICSE,ISC,CBSE,STATE)</div><div class="metric-value">80%</div><div class="metric-label">Average Score</div></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">Board Exams (CBSE/ICSE/State)</div>
+            <div class="metric-value">80%</div>
+            <div class="metric-sub">Average Score</div>
+        </div>
+        """, unsafe_allow_html=True)
     with r2:
-        st.markdown('<div class="metric-card"><div class="metric-label">Improvement</div><div class="metric-value">60%</div><div class="metric-label">vs. Baseline</div></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">Student Improvement</div>
+            <div class="metric-value">60%</div>
+            <div class="metric-sub">vs. Baseline</div>
+        </div>
+        """, unsafe_allow_html=True)
     with r3:
-        st.markdown('<div class="metric-card"><div class="metric-label">Resolution Time</div><div class="metric-value">&lt; 2 Hrs</div><div class="metric-label">Doubt Support</div></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-label">Doubt Support</div>
+            <div class="metric-value">&lt; 2 Hrs</div>
+            <div class="metric-sub">Resolution Time</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     st.write("")
     st.markdown("## 💡 Why Parents Trust Us")
     
     w1, w2, w3 = st.columns(3)
     
-    # Using the same card style for "Why Trust Us" to ensure visibility
     with w1:
-        st.markdown('<div class="review-card"><h3>🎓 Expert Educator</h3><p style="color:#333;">One-on-one mentoring that identifies specific learning gaps.</p></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background:white; padding:20px; border-radius:10px; color:black !important;">
+            <h3 style="color:#2c5282 !important; margin:0;">🎓 Expert Educator</h3>
+            <p style="color:#333 !important; margin-top:10px;">One-on-one mentoring that identifies specific learning gaps.</p>
+        </div>
+        """, unsafe_allow_html=True)
     with w2:
-        st.markdown('<div class="review-card"><h3>🧠 Conceptual</h3><p style="color:#333;">No rote memorization. We focus on "Why" and "How".</p></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background:white; padding:20px; border-radius:10px; color:black !important;">
+            <h3 style="color:#2c5282 !important; margin:0;">🧠 Conceptual</h3>
+            <p style="color:#333 !important; margin-top:10px;">No rote memorization. We focus on "Why" and "How".</p>
+        </div>
+        """, unsafe_allow_html=True)
     with w3:
-        st.markdown('<div class="review-card"><h3>💰 Fair Pricing</h3><p style="color:#333;">No hidden fees. Quality education for every family.</p></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background:white; padding:20px; border-radius:10px; color:black !important;">
+            <h3 style="color:#2c5282 !important; margin:0;">💰 Fair Pricing</h3>
+            <p style="color:#333 !important; margin-top:10px;">No hidden fees. Quality education for every family.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.write("")
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        st.link_button("📱 Book Free Trial", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
-
+        st.link_button("📱 Book Free Trial", "https://wa.me/917339315376", use_container_width=True)
 # ==========================================
 # PAGE: BOOTCAMP
 # ==========================================
@@ -993,3 +1024,4 @@ st.markdown("""
 <p>© 2026 The Molecular Man Expert Tuition Solutions | Mohammed Salmaan M.</p>
 </div>
 """, unsafe_allow_html=True)
+
