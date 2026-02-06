@@ -172,7 +172,7 @@ def get_groq_client_wrapper(api_key):
 
 
 # --- AYA LOGIC (Updated from aya.py) ---
-PAGE CONFIGURATION
+#PAGE CONFIGURATION
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="The Molecular Man AI",
@@ -1604,3 +1604,4 @@ with st.container(border=True):
         "</div>", 
         unsafe_allow_html=True
     )
+
