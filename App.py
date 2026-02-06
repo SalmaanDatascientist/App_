@@ -313,14 +313,14 @@ with col2:
 with col3:
     if st.button("🔴 Live Class", use_container_width=True): st.session_state.page = "Live Class"; st.rerun()
 with col4:
-    if st.button("💬 Stories", use_container_width=True): st.session_state.page = "Testimonials"; st.rerun()
+    if st.button("💬 Testimonials", use_container_width=True): st.session_state.page = "Testimonials"; st.rerun()
 with col5:
     if st.button("🐍 Bootcamp", use_container_width=True): st.session_state.page = "Bootcamp"; st.rerun()
 with col6:
     if st.button("📞 Contact", use_container_width=True): st.session_state.page = "Contact"; st.rerun()
 
 st.write("")
-st.markdown("### 🤖 AI Power Tools (Free)")
+st.markdown("### 🤖 AI Tools (Free)")
 ai_col1, ai_col2 = st.columns(2)
 with ai_col1:
     if st.button("🧠 Chat with AyA (AI Tutor)", use_container_width=True, type="primary"): 
@@ -717,44 +717,229 @@ elif st.session_state.page == "Live Class":
 elif st.session_state.page == "Services":
     st.markdown("# 📚 Our Services")
     st.markdown("## 🎓 Subjects We Teach")
+    
     sub1, sub2 = st.columns(2)
+    
     with sub1:
         with st.container(border=True):
             st.markdown("### 📐 Mathematics")
-            st.write("Classes 6-12 (CBSE/State/Commerce/Science)")
+            st.markdown("**Classes 6-8:** Foundation building with number systems, geometry, algebra basics")
+            st.markdown("**Classes 9-10 (CBSE/State):** Algebra, Trigonometry, Coordinate Geometry, Statistics")
+            st.markdown("**Classes 11-12 (Science):** Calculus, Vectors, 3D Geometry, Probability")
+            st.markdown("**Classes 11-12 (Commerce):** Business Math, Statistics for Economics")
+        
         st.write("")
         with st.container(border=True):
             st.markdown("### ⚗️ Chemistry")
-            st.write("NEET/JEE Chemistry, Organic & Inorganic")
+            st.markdown("**Classes 6-10:** Basic concepts, Periodic Table, Chemical Reactions")
+            st.markdown("**Classes 11-12:** Physical, Organic & Inorganic Chemistry")
+            st.markdown("**Specialization:** NEET/JEE Chemistry Problem-Solving")
+    
     with sub2:
         with st.container(border=True):
             st.markdown("### ⚡ Physics")
-            st.write("Conceptual clarity & Numerical problem solving")
+            st.markdown("**Classes 6-10:** Mechanics, Light, Sound, Electricity basics")
+            st.markdown("**Classes 11-12:** Mechanics, Thermodynamics, Electromagnetism, Modern Physics")
+            st.markdown("**Focus:** Numerical problem-solving & conceptual clarity")
+        
         st.write("")
         with st.container(border=True):
             st.markdown("### 🧬 Biology")
-            st.write("Botany, Zoology & NEET Prep")
+            st.markdown("**Classes 6-10:** Cell biology, Human body systems, Ecology")
+            st.markdown("**Classes 11-12:** Botany, Zoology, Genetics, Evolution")
+            st.markdown("**NEET Prep:** High-yield topics with diagram practice")
+    
+    st.write("")
+    st.markdown("## 🏆 Competitive Exam Preparation")
+    
+    e1, e2, e3 = st.columns(3)
+    
+    with e1:
+        with st.container(border=True):
+            st.markdown("#### 🎯 NEET (Medical)")
+            st.markdown("**Focus Areas:**")
+            st.write("• Biology: High-yield topics & diagrams")
+            st.write("• Chemistry: Organic reactions & mechanisms")
+            st.write("• Physics: Numerical shortcuts")
+    
+    with e2:
+        with st.container(border=True):
+            st.markdown("#### 🔬 JEE (Engineering)")
+            st.markdown("**Focus Areas:**")
+            st.write("• Mathematics: Advanced problem-solving")
+            st.write("• Physics: Conceptual depth")
+            st.write("• Chemistry: Simplified ")
+    
+    with e3:
+        with st.container(border=True):
+            st.markdown("#### 📝 Board Exams")
+            st.markdown("**Preparation Strategy:**")
+            st.write("• IGCSE/ISC/IB/ICSE?CBSE/State syllabus mastery")
+            st.write("• Previous year papers")
+            st.write("• Writing practice for theory")
+    
+    st.write("")
+    st.markdown("## 💡 Our Teaching Approach")
+    
+    t1, t2 = st.columns(2)
+    
+    with t1:
+        with st.container(border=True):
+            st.markdown("### 📋 Personalized Learning Plans")
+            st.write("Every student receives a custom curriculum based on:")
+            st.write("• Initial assessment of strengths & weaknesses")
+            st.write("• Target exam (Board/NEET/JEE)")
+            st.write("• Learning pace & preferred style")
+            st.write("• Regular progress tracking")
+        
+        st.write("")
+        with st.container(border=True):
+            st.markdown("### 🎨 Interactive Teaching Methods")
+            st.write("• Visual aids & animations for complex topics")
+            st.write("• Real-world applications of concepts")
+            st.write("• Hands-on problem-solving sessions")
+            st.write("• Doubt-clearing after every class")
+    
+    with t2:
+        with st.container(border=True):
+            st.markdown("### 📊 Continuous Assessment")
+            st.write("• Weekly quizzes & mock tests")
+            st.write("• Chapter-wise assignments")
+            st.write("• Monthly performance reports")
+            st.write("• Parent-teacher meetings")
+        
+        st.write("")
+        with st.container(border=True):
+            st.markdown("### 🤖 Technology Integration")
+            st.write("• AI tutor available 24/7 for homework help")
+            st.write("• Digital study materials & notes")
+            st.write("• Doubt sessions ")
+            st.write("• Recorded lectures for revision")
+    
+    st.write("")
+    st.markdown("## 👥 Batch Options")
+    
+    b1, b2, b3 = st.columns(3)
+    
+    with b1:
+        with st.container(border=True):
+            st.markdown("#### 🎯 One-on-One")
+            st.markdown("**Best for:** Personalized attention")
+            st.write("• Fully customized pace")
+            st.write("• Flexible timing")
+            st.write("• Focus on specific weak areas")
+    
+    with b2:
+        with st.container(border=True):
+            st.markdown("#### 👫 Small Group (3-5)")
+            st.markdown("**Best for:** Peer learning")
+            st.write("• Interactive discussions")
+            st.write("• Competitive environment")
+            st.write("• Affordable pricing")
+    
+    with b3:
+        with st.container(border=True):
+            st.markdown("#### 💻 Online Classes")
+            st.markdown("**Best for:** Flexibility")
+            st.write("• Learn from anywhere")
+            st.write("• Recorded sessions")
+            st.write("• Digital whiteboard")
+
 
 # ==========================================
 # PAGE: TESTIMONIALS
 # ==========================================
 elif st.session_state.page == "Testimonials":
+    # Custom CSS to force BLACK text on WHITE cards
+    st.markdown("""
+    <style>
+        .review-card {
+            background-color: #ffffff !important;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-left: 5px solid #2c5282;
+            color: #000000 !important; /* Force Black Text */
+        }
+        .review-text {
+            font-size: 16px;
+            font-style: italic;
+            color: #333333 !important; /* Dark Grey Text */
+            line-height: 1.5;
+        }
+        .review-author {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #2c5282 !important; /* Navy Blue Author Name */
+            text-align: right;
+        }
+        /* Metrics Box Styling */
+        .metric-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: black !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-value { font-size: 28px; font-weight: bold; color: black; }
+        .metric-label { font-size: 14px; color: #555; }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("# 💬 Student Success Stories")
+    
     t1, t2 = st.columns(2)
+    
+    # Function to render the clean card
     def testimonial_card(text, author):
         st.markdown(f"""
-<div style="background:white; padding:20px; border-radius:10px; border-left:5px solid #2c5282; margin-bottom:20px;">
-<div style="color:#333; font-style:italic;">"{text}"</div>
-<div style="color:#2c5282; font-weight:bold; margin-top:10px; text-align:right;">- {author}</div>
-</div>
-""", unsafe_allow_html=True)
+        <div class="review-card">
+            <div class="review-text">"{text}"</div>
+            <div class="review-author">- {author}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with t1:
-        testimonial_card("Sir's organic chemistry teaching helped me a lot!", "Pranav.S, Class 12")
-        testimonial_card("Math grades improved from 60% to 95%.", "Mrs. Lakshmi, Parent")
+        testimonial_card("Sir's organic chemistry teaching helped me a lot. His mechanism approach made everything so clear!", "Pranav.S, Class 12 - IGCSE")
+        testimonial_card("The AI tutor is a game-changer! Got stuck at 11 PM on calculus homework, and it solved everything step-by-step.", "Arjun K., Class 12 CBSE")
+        testimonial_card("My daughter's math grades improved from 60% to 95% in one semester. The personalized attention really works!", "Mrs. Lakshmi, Parent")
+    
     with t2:
-        testimonial_card("Physics numericals used to scare me. Now I solve them confidently.", "Rahul M., JEE Aspirant")
-        testimonial_card("The Python bootcamp was amazing!", "Divya S., College Student")
+        testimonial_card("Physics numerical problems used to scare me. Now I solve them confidently thanks to sir's shortcut techniques.", "Rahul M., JEE Aspirant")
+        testimonial_card("The Python bootcamp was amazing! Learned data science basics in 8 weekends and built my own project.", "Divya S., College Student")
+        testimonial_card("Small batch size means sir knows exactly where I'm struggling. Best decision for my board exam prep!", "Sneha P., Class 12 ISC")
+    
+    st.write("")
+    st.markdown("## 🏆 Our Results")
+    
+    r1, r2, r3 = st.columns(3)
+    
+    with r1:
+        st.markdown('<div class="metric-card"><div class="metric-label">Board Exams(Including IGCSE,ICSE,ISC,CBSE,STATE)</div><div class="metric-value">80%</div><div class="metric-label">Average Score</div></div>', unsafe_allow_html=True)
+    with r2:
+        st.markdown('<div class="metric-card"><div class="metric-label">Improvement</div><div class="metric-value">60%</div><div class="metric-label">vs. Baseline</div></div>', unsafe_allow_html=True)
+    with r3:
+        st.markdown('<div class="metric-card"><div class="metric-label">Resolution Time</div><div class="metric-value">&lt; 2 Hrs</div><div class="metric-label">Doubt Support</div></div>', unsafe_allow_html=True)
+    
+    st.write("")
+    st.markdown("## 💡 Why Parents Trust Us")
+    
+    w1, w2, w3 = st.columns(3)
+    
+    # Using the same card style for "Why Trust Us" to ensure visibility
+    with w1:
+        st.markdown('<div class="review-card"><h3>🎓 Expert Educator</h3><p style="color:#333;">One-on-one mentoring that identifies specific learning gaps.</p></div>', unsafe_allow_html=True)
+    with w2:
+        st.markdown('<div class="review-card"><h3>🧠 Conceptual</h3><p style="color:#333;">No rote memorization. We focus on "Why" and "How".</p></div>', unsafe_allow_html=True)
+    with w3:
+        st.markdown('<div class="review-card"><h3>💰 Fair Pricing</h3><p style="color:#333;">No hidden fees. Quality education for every family.</p></div>', unsafe_allow_html=True)
+
+    st.write("")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        st.link_button("📱 Book Free Trial", "[https://wa.me/917339315376](https://wa.me/917339315376)", use_container_width=True)
 
 # ==========================================
 # PAGE: BOOTCAMP
