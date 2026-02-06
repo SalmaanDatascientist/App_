@@ -86,6 +86,7 @@ def init_files():
             json.dump([], f)
     if not os.path.exists(LIVE_STATUS_FILE):
         with open(LIVE_STATUS_FILE, "w") as f:
+            # Changed 'link' default to empty string, intended for Google Meet URL
             json.dump({"is_live": False, "topic": "", "link": ""}, f)
     if not os.path.exists(SESSIONS_FILE):
         with open(SESSIONS_FILE, "w") as f:
@@ -164,61 +165,160 @@ def set_live_status(is_live, topic="", link=""):
     with open(LIVE_STATUS_FILE, "w") as f:
         json.dump(status, f)
 
-# --- AI Logic (Groq/OpenAI) ---
+# --- NEW AI Logic (Merged from aya.py & mt.py) ---
+
 def get_groq_client_wrapper(api_key):
     return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
 
+# --- AYA LOGIC (From aya.py) ---
 def solve_problem_aya(api_key, question_text, file_obj=None, file_type=None):
     try:
         client = get_groq_client_wrapper(api_key)
-        base_prompt = """### ROLE: Aya, Lead AI Tutor at The Molecular Man.
-        Mission: Guide students from Zero to Hero.
-        Modes:
-        1. Builder (Beginner): Use analogies.
-        2. Scholar (Intermediate): Step-by-step logic.
-        3. Expert (Advanced): Technical nuance.
+        groq_client = Groq(api_key=api_key) # Native Groq client for Vision models
+
+        base_prompt = """### ROLE DEFINITION
+You are **Aya**, the Lead AI Tutor at **The Molecular Man Expert Tuition Solutions**. 
+Your Mission: Guide students on a journey from "Zero" (absolute beginner) to "Hero" (advanced mastery) in any subject. 
+
+### THE "ZERO TO HERO" FRAMEWORK
+Before answering, assess the complexity.
+**MODE A: THE BUILDER (Beginner)**: Use analogies and plain language.
+**MODE B: THE SCHOLAR (Intermediate)**: Step-by-step logic and standard terminology.
+**MODE C: THE EXPERT (Advanced)**: Technical nuance and deep analysis.
+
+### UNIVERSAL RESPONSE STRUCTURE
+1.  **🧠 CONCEPT:** Briefly define the core concept. 
+2.  **🌍 REAL-WORLD CONTEXT:** One sentence on where this is used in real life.
+3.  **✍️ SOLUTION:** Step-by-Step calculation or structured argument.
+4.  **✅ ANSWER:** The final result.
+5.  **🚀 HERO TIP:** A "Pro Tip" or trap to avoid.
+"""
+
+        if file_type == "image" and file_obj:
+            try:
+                # Image processing logic
+                image = Image.open(file_obj)
+                buffered = io.BytesIO()
+                image.save(buffered, format="PNG")
+                img_base64 = base64.standard_b64encode(buffered.getvalue()).decode("utf-8")
+                
+                prompt = base_prompt + "\n\nSOLVE THE PROBLEM IN THIS IMAGE:"
+                
+                # Using Native Groq Client for Vision
+                model = "llama-3.2-11b-vision-preview" # Fallback if 90b fails
+                try:
+                    message = groq_client.chat.completions.create(
+                        model="llama-3.2-90b-vision-preview",
+                        messages=[{
+                            "role": "user", 
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
+                            ]
+                        }],
+                        max_tokens=1024,
+                        temperature=0.5
+                    )
+                    return message.choices[0].message.content
+                except:
+                     # Retry with smaller model
+                    message = groq_client.chat.completions.create(
+                        model=model,
+                        messages=[{
+                            "role": "user", 
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
+                            ]
+                        }],
+                        max_tokens=1024,
+                        temperature=0.5
+                    )
+                    return message.choices[0].message.content
+
+            except Exception as e:
+                return f"Error processing image: {str(e)}"
         
-        Structure:
-        1. 🧠 CONCEPT
-        2. 🌍 REAL-WORLD CONTEXT
-        3. ✍️ SOLUTION (Step-by-step)
-        4. ✅ ANSWER
-        5. 🚀 HERO TIP
-        """
-        
-        prompt = base_prompt + f"\n\nPROBLEM:\n{question_text}"
-        
-        if file_type == "pdf" and file_obj:
-            pdf_reader = PyPDF2.PdfReader(file_obj)
-            text = ""
-            for p in range(min(2, len(pdf_reader.pages))): text += pdf_reader.pages[p].extract_text()
-            prompt += f"\n\nPDF CONTENT:\n{text[:2000]}"
-            
+        elif file_type == "pdf" and file_obj:
+            try:
+                pdf_reader = PyPDF2.PdfReader(file_obj)
+                pdf_text = ""
+                for page_num in range(min(2, len(pdf_reader.pages))):
+                    page = pdf_reader.pages[page_num]
+                    pdf_text += page.extract_text()[:1000]
+                
+                prompt = base_prompt + f"\n\nPROBLEM from PDF:\n{pdf_text}"
+            except Exception as e:
+                return f"Error reading PDF: {str(e)}"
+        else:
+            prompt = base_prompt + f"\n\nPROBLEM:\n{question_text}"
+
+        # Text generation for PDF/Text
         models = ["llama-3.1-70b-versatile", "llama-3.1-8b-instant", "gemma-7b-it"]
         for model in models:
             try:
                 resp = client.chat.completions.create(
-                    model=model, messages=[{"role": "user", "content": prompt}]
+                    model=model, messages=[{"role": "user", "content": prompt}], temperature=0.5
                 )
                 return resp.choices[0].message.content
             except: continue
         return "Error: AI Service Unavailable."
+
     except Exception as e:
         return f"Error: {str(e)}"
 
+# --- MOCK TEST LOGIC (From mt.py) ---
+def clean_input(text):
+    if not text: return ""
+    return text.encode('ascii', 'ignore').decode('ascii').strip()
+
 def generate_test_questions(api_key, model, board, cls, sub, chap, num, diff, q_type):
     client = get_groq_client_wrapper(api_key)
-    context = (f"You are a strict Textbook Author for {board} Board. Subject: {sub}, Class: {cls}, Chapter: '{chap}'. "
-               f"Output strictly valid JSON.")
+    safe_sub = clean_input(sub)
+    safe_chap = clean_input(chap)
     
+    context = (
+        f"You are a strict Textbook Author and Examiner for the {board} Board. "
+        f"Subject: {safe_sub}, Class: {cls}, Chapter: '{safe_chap}'.\n"
+        f"CRITICAL RULES:\n"
+        f"1. Questions must be factually 100% correct according to standard {board} textbooks.\n"
+        f"2. Avoid ambiguous questions. There must be exactly one indisputable correct answer.\n"
+        f"3. Use questions from Past Year Papers where possible.\n"
+    )
+
     if q_type == "MCQ":
-        prompt = f"""{context} Create {num} {diff}-level MCQs.
-        JSON Format: [{{"id": 1, "question": "Txt?", "options": ["A","B","C","D"], "correct_answer": "A"}}]
-        Return ONLY raw JSON."""
-    else:
-        prompt = f"""{context} Create {num} {diff}-level Descriptive Qs with marks.
-        JSON Format: [{{"id": 1, "question": "Txt?", "marks": 3}}]
-        Return ONLY raw JSON."""
+        prompt = f"""
+        {context}
+        Create a strictly valid JSON list of {num} {diff}-level Multiple Choice Questions (MCQs).
+        
+        JSON Format:
+        [
+            {{
+                "id": 1, 
+                "question": "Question text?", 
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "correct_answer": "Option A"
+            }}
+        ]
+        VERIFICATION STEP: Before outputting, check that 'correct_answer' matches one of the 'options' exactly.
+        Return ONLY raw JSON.
+        """
+    else: # Descriptive
+        prompt = f"""
+        {context}
+        Create a strictly valid JSON list of {num} {diff}-level Descriptive Questions.
+        Include 'marks' (e.g., 2, 3, 5).
+        
+        JSON Format:
+        [
+            {{
+                "id": 1, 
+                "question": "Question text?", 
+                "marks": 3
+            }}
+        ]
+        Return ONLY raw JSON.
+        """
     
     try:
         response = client.chat.completions.create(
@@ -230,12 +330,84 @@ def generate_test_questions(api_key, model, board, cls, sub, chap, num, diff, q_
     except Exception as e:
         return None
 
+def grade_mcq(api_key, model, questions, user_answers, board, cls, sub):
+    client = get_groq_client_wrapper(api_key)
+    score = 0
+    incorrect_log = ""
+    
+    for q in questions:
+        q_id = str(q['id'])
+        u_ans = user_answers.get(q_id)
+        c_ans = q['correct_answer']
+        if u_ans == c_ans:
+            score += 1
+        else:
+            incorrect_log += f"Q: {q['question']}\nStudent Answer: {u_ans}\nCorrect Answer: {c_ans}\n\n"
+            
+    st.session_state.score = score
+    st.session_state.total_marks = len(questions)
+
+    if score == len(questions):
+        return "### Excellent! Perfect Score. \nYou have mastered this topic based on Board standards."
+        
+    prompt = f"""
+    The student scored {score}/{len(questions)} in a {board} Class {cls} {sub} MCQ test.
+    Mistakes:
+    {incorrect_log}
+    
+    Provide a "Scope for Improvement" analysis. 
+    Explain clearly WHY the student's answer was wrong and why the correct answer is correct.
+    """
+    try:
+        response = client.chat.completions.create(
+            model=model, messages=[{"role": "user", "content": prompt}], temperature=0.3
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error analyzing performance: {str(e)}"
+
+def grade_descriptive(api_key, model, questions, user_answers, board, cls, sub):
+    client = get_groq_client_wrapper(api_key)
+    qa_data = ""
+    total_possible_marks = 0
+    
+    for q in questions:
+        q_id = str(q['id'])
+        u_ans = user_answers.get(q_id, "No Answer")
+        marks = q.get('marks', 1)
+        total_possible_marks += marks
+        qa_data += f"Q ({marks} marks): {q['question']}\nStudent Answer: {u_ans}\n\n"
+    
+    st.session_state.total_marks = total_possible_marks
+
+    prompt = f"""
+    You are a strict examiner for {board} Class {cls} {sub}.
+    Evaluate these descriptive answers based on standard Board marking schemes.
+    
+    Data:
+    {qa_data}
+    
+    Output Requirements:
+    1. Award marks for EACH question.
+    2. Calculate Total Score obtained out of {total_possible_marks}.
+    3. Provide "Scope for Improvement" pointing out missing keywords or concepts.
+    4. Format clearly in Markdown.
+    """
+    try:
+        response = client.chat.completions.create(
+            model=model, messages=[{"role": "user", "content": prompt}], temperature=0.2
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error grading descriptive answers: {str(e)}"
+
+
 # -----------------------------------------------------------------------------
 # 4. CSS STYLING & FOUNDER HEADER
 # -----------------------------------------------------------------------------
 st.markdown("""
 <style>
-    /* 1. Reduce Top Padding to utilize empty space */
+    /* 1. Reduce Top Padding */
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 5rem !important;
@@ -246,7 +418,7 @@ st.markdown("""
         background: linear-gradient(135deg, #4a90a4 0%, #6bb5c7 50%, #8fd4e3 100%) !important;
     }
     
-    /* 3. FOUNDER HEADER STYLES (NEW) */
+    /* 3. FOUNDER HEADER STYLES */
     @keyframes flash-pulse {
         0% { opacity: 1; transform: scale(1); text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         50% { opacity: 0.85; transform: scale(1.01); text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5); }
@@ -256,7 +428,7 @@ st.markdown("""
     .founder-header-container {
         text-align: center;
         padding: 25px 15px;
-        background: rgba(0, 0, 0, 0.2); /* Semi-transparent dark background for contrast */
+        background: rgba(0, 0, 0, 0.2);
         border-radius: 20px;
         margin-bottom: 25px;
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -270,20 +442,19 @@ st.markdown("""
         color: #ffffff;
         margin-bottom: 12px;
         line-height: 1.2;
-        /* The Flashing Animation */
         animation: flash-pulse 2.5s infinite ease-in-out;
     }
     
     .founder-subhead {
         font-size: 1.2rem;
-        color: #e0f7fa; /* Light cyan text */
+        color: #e0f7fa;
         margin-bottom: 10px;
         font-weight: 500;
     }
     
     .founder-tagline {
         font-size: 1.0rem;
-        color: #ffd700; /* Gold Color */
+        color: #ffd700;
         font-style: italic;
         font-weight: 800;
         text-transform: uppercase;
@@ -327,7 +498,7 @@ st.markdown("""
         100% { transform: scale(1); }
     }
     .live-join-btn {
-        background: linear-gradient(45deg, #ff0000, #ff5252);
+        background: linear-gradient(45deg, #00897b, #00bfa5);
         color: white;
         padding: 15px 30px;
         border-radius: 50px;
@@ -336,6 +507,11 @@ st.markdown("""
         display: inline-block;
         animation: pulse 2s infinite;
         text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .live-join-btn:hover {
+        color: white;
+        background: linear-gradient(45deg, #00695c, #00897b);
     }
 
     /* Inputs */
@@ -368,7 +544,6 @@ st.markdown("""
 # 5. HEADER & NAVIGATION MENU
 # -----------------------------------------------------------------------------
 
-# --- NEW FOUNDER HEADER SECTION ---
 st.markdown("""
 <div class="founder-header-container">
     <div class="founder-headline">Other Apps Were Coded by Engineers. This One Was Coded by Your Master Tutor - Mohammed Salmaan.</div>
@@ -376,7 +551,6 @@ st.markdown("""
     <div class="founder-tagline">Pure Teaching Intelligence. Zero Corporate Noise.</div>
 </div>
 """, unsafe_allow_html=True)
-# ----------------------------------
 
 col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
@@ -447,7 +621,7 @@ if st.session_state.page == "Home":
             st.write("Weekend intensive courses in Data Science & AI with hands-on projects.")
 
 # ==========================================
-# PAGE: LIVE CLASS
+# PAGE: LIVE CLASS (UPDATED FOR GOOGLE MEET)
 # ==========================================
 elif st.session_state.page == "Live Class":
     st.markdown("# 🔴 Molecular Man Live Classroom")
@@ -489,13 +663,8 @@ elif st.session_state.page == "Live Class":
                 with st.container(border=True):
                     if status["is_live"]:
                         st.success(f"✅ YOU ARE LIVE: {status['topic']}")
-                        st.markdown(f"""
-                            <a href="[https://meet.jit.si/](https://meet.jit.si/){status['link']}" target="_blank">
-                                <button style="background:green; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer;">
-                                    🎥 Join as Host
-                                </button>
-                            </a>
-                        """, unsafe_allow_html=True)
+                        st.markdown(f"**Meeting Link:** {status['link']}")
+                        
                         if st.button("End Class ⏹️", type="primary"):
                             set_live_status(False)
                             st.rerun()
@@ -503,11 +672,15 @@ elif st.session_state.page == "Live Class":
                         st.info("Start a new session")
                         with st.form("start_live"):
                             topic = st.text_input("Topic")
+                            meet_link = st.text_input("Google Meet Link", placeholder="[https://meet.google.com/](https://meet.google.com/)...")
+                            
                             if st.form_submit_button("GO LIVE 🔴"):
-                                room_code = f"MolecularMan_{uuid.uuid4().hex[:8]}"
-                                set_live_status(True, topic, room_code)
-                                add_notification(f"🔴 Live Class Started: {topic}")
-                                st.rerun()
+                                if topic and meet_link:
+                                    set_live_status(True, topic, meet_link)
+                                    add_notification(f"🔴 Live Class Started: {topic}")
+                                    st.rerun()
+                                else:
+                                    st.warning("Please enter both Topic and Link.")
             with col_b:
                 with st.form("notif"):
                     msg = st.text_area("Announcement")
@@ -524,8 +697,8 @@ elif st.session_state.page == "Live Class":
                     <h1 style="color: #ff4444 !important;">🔴 LIVE NOW</h1>
                     <h2>Topic: {status['topic']}</h2>
                     <br>
-                    <a href="[https://meet.jit.si/](https://meet.jit.si/){status['link']}" target="_blank" class="live-join-btn">
-                        👉 CLICK TO JOIN CLASS
+                    <a href="{status['link']}" target="_blank" class="live-join-btn">
+                        🎥 JOIN GOOGLE MEET
                     </a>
                     <p style="margin-top:10px; color:#ccc;">(Opens in new tab)</p>
                 </div>
@@ -545,15 +718,12 @@ elif st.session_state.page == "Live Class":
 
 
 # ==========================================
-# PAGE: AI TOOLS
+# PAGE: AI TOOLS (UPDATED WITH AYA & MT LOGIC)
 # ==========================================
 elif st.session_state.page == "AI Tools":
     
-    # Unified Login Wall for AI Tools
     if not st.session_state.logged_in:
         st.markdown("# 🤖 AI Tools Access")
-        
-        # --- REPLACED st.info WITH THIS CUSTOM BLOCK ---
         st.markdown("""
         <div style="
             background-color: #cce5ff; 
@@ -567,7 +737,6 @@ elif st.session_state.page == "AI Tools":
             <strong>ℹ️ Info:</strong> Please login to access Aya AI and Mock Tests.
         </div>
         """, unsafe_allow_html=True)
-        # -----------------------------------------------
 
         col1, col2, col3 = st.columns([1, 2, 1])    
     
@@ -586,20 +755,20 @@ elif st.session_state.page == "AI Tools":
         # LOGGED IN VIEW
         st.markdown(f"## 🤖 Welcome, {st.session_state.username}")
         
-        # Tabs for AYA vs Mock Test
         tab1, tab2 = st.tabs([" AYA - The Molecular Man AI", "📝 AI Mock Test Generator"])
         
-        # --- TAB 1: AYA ASSISTANT ---
+        # --- TAB 1: AYA ASSISTANT (INTEGRATED) ---
         with tab1:
             st.markdown("### 🤖 Aya - Universal Problem Solver")
             st.markdown("Upload a photo or paste text for Algebra, Physics, Chemistry, or Biology problems.")
             
-            # API Config
             api_key = st.secrets.get("GROQ_API_KEY")
             if not api_key:
                 st.error("⚠️ GROQ_API_KEY missing in secrets.")
             else:
-                input_type = st.radio("Input Method:", ["📄 Text Problem", "📕 Upload PDF"], horizontal=True)
+                input_type = st.radio("Select Input Method:", 
+                                    ["📄 Text Problem", "🖼️ Upload Image", "📕 Upload PDF"], 
+                                    horizontal=True)
                 
                 user_q = None
                 uploaded_file = None
@@ -607,22 +776,35 @@ elif st.session_state.page == "AI Tools":
                 
                 if input_type == "📄 Text Problem":
                     user_q = st.text_area("Paste question here:", height=100)
+                elif input_type == "🖼️ Upload Image":
+                    uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png", "webp"])
+                    if uploaded_file:
+                        st.image(uploaded_file, caption="Preview", width=300)
+                        file_type = "image"
                 elif input_type == "📕 Upload PDF":
                     uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
-                    if uploaded_file: file_type = "pdf"
+                    if uploaded_file: 
+                        st.info(f"📄 File: {uploaded_file.name}")
+                        file_type = "pdf"
                 
                 if st.button("Solve with Aya 🚀"):
-                    with st.spinner("Aya is thinking..."):
-                        if input_type == "📄 Text Problem":
-                            ans = solve_problem_aya(api_key, user_q)
-                        else:
-                            ans = solve_problem_aya(api_key, "", uploaded_file, file_type)
-                        
-                        st.markdown("### 💡 Solution")
-                        with st.container(border=True):
-                            st.markdown(ans)
+                    if input_type == "📄 Text Problem" and not user_q:
+                        st.warning("⚠️ Please enter a question.")
+                    elif (input_type != "📄 Text Problem") and not uploaded_file:
+                        st.warning("⚠️ Please upload a file.")
+                    else:
+                        with st.spinner("Aya is thinking..."):
+                            if input_type == "📄 Text Problem":
+                                ans = solve_problem_aya(api_key, user_q)
+                            else:
+                                ans = solve_problem_aya(api_key, "", uploaded_file, file_type)
+                            
+                            st.markdown("### 💡 Solution")
+                            with st.container(border=True):
+                                st.markdown(ans)
+                                st.caption("Generated by Aya AI Model | The Molecular Man")
 
-        # --- TAB 2: MOCK TEST ---
+        # --- TAB 2: MOCK TEST (INTEGRATED) ---
         with tab2:
             st.markdown("### 📝 AI Mock Test Generator")
             
@@ -631,20 +813,23 @@ elif st.session_state.page == "AI Tools":
                 st.error("API Key Missing")
             else:
                 if not st.session_state.questions:
-                    # CONFIG FORM
-                    col_a, col_b = st.columns(2)
-                    with col_a:
-                        board = st.selectbox("Board", ["CBSE", "ICSE", "State Board", "NEET", "JEE"])
-                        cls = st.selectbox("Class", ["9", "10", "11", "12"])
-                        sub = st.text_input("Subject", "Chemistry")
-                    with col_b:
-                        chap = st.text_input("Chapter", "Thermodynamics")
-                        q_type = st.radio("Type", ["MCQ", "Descriptive"], horizontal=True)
-                        num = st.slider("Questions", 3, 20, 5)
-                        diff = st.selectbox("Difficulty", ["Easy", "Medium", "Hard"])
+                    # CONFIG FORM (Moved from Sidebar to Main)
+                    with st.container(border=True):
+                        st.markdown("#### Test Configuration")
+                        c1, c2, c3 = st.columns(3)
+                        with c1:
+                            board = st.selectbox("Board", ["CBSE", "ICSE", "State Board", "NEET", "JEE"])
+                            cls = st.selectbox("Class", [str(i) for i in range(6, 13)] + ["Other"])
+                        with c2:
+                            sub = st.text_input("Subject", "Chemistry")
+                            chap = st.text_input("Chapter", "Thermodynamics")
+                        with c3:
+                            q_type = st.radio("Type", ["MCQ", "Descriptive"], horizontal=True)
+                            num = st.slider("Questions", 3, 20, 5)
+                            diff = st.selectbox("Difficulty", ["Easy", "Medium", "Hard"])
                     
                     if st.button("Generate Test ⚡", type="primary"):
-                        with st.spinner("Generating..."):
+                        with st.spinner(f"Creating {board} pattern {q_type}s..."):
                             model = "llama-3.1-70b-versatile"
                             qs = generate_test_questions(api_key, model, board, cls, sub, chap, num, diff, q_type)
                             if qs:
@@ -653,34 +838,64 @@ elif st.session_state.page == "AI Tools":
                                 st.session_state.score = 0
                                 st.session_state.feedback = None
                                 st.session_state.user_answers = {}
+                                st.session_state.current_test_meta = {"board": board, "class": cls, "subject": sub}
                                 st.rerun()
                 else:
                     # EXAM FORM
                     st.markdown(f"#### {st.session_state.q_type} Test")
                     with st.form("exam_form"):
                         for q in st.session_state.questions:
-                            st.markdown(f"**Q{q['id']}. {q['question']}**")
+                            label = f"**Q{q['id']}. {q['question']}**"
+                            if st.session_state.q_type == "Descriptive":
+                                label += f" *({q.get('marks', 1)} Marks)*"
+                            st.markdown(label)
+                            
                             if st.session_state.q_type == "MCQ":
-                                st.radio("Options", q['options'], key=f"ans_{q['id']}")
+                                st.radio("Options", q['options'], key=f"ans_{q['id']}", index=None, label_visibility="collapsed")
                             else:
                                 st.text_area("Answer", key=f"ans_{q['id']}")
                             st.markdown("---")
                         
                         if st.form_submit_button("Submit Test"):
-                            # Simple grading logic for MCQ
-                            score = 0
+                            # Capture answers
+                            all_answered = True
                             for q in st.session_state.questions:
                                 u = st.session_state.get(f"ans_{q['id']}")
+                                if not u: all_answered = False
                                 st.session_state.user_answers[str(q['id'])] = u
-                                if st.session_state.q_type == "MCQ" and u == q['correct_answer']:
-                                    score += 1
-                            st.session_state.score = score
-                            st.session_state.feedback = f"You scored {score}/{len(st.session_state.questions)}"
-                            st.rerun()
+                            
+                            if not all_answered and st.session_state.q_type == "MCQ":
+                                st.error("Please answer all questions.")
+                            else:
+                                # Grading Logic
+                                meta = st.session_state.current_test_meta
+                                model = "llama-3.1-70b-versatile"
+                                if st.session_state.q_type == "MCQ":
+                                    feedback = grade_mcq(api_key, model, st.session_state.questions, st.session_state.user_answers, meta['board'], meta['class'], meta['subject'])
+                                else:
+                                    feedback = grade_descriptive(api_key, model, st.session_state.questions, st.session_state.user_answers, meta['board'], meta['class'], meta['subject'])
+                                
+                                st.session_state.feedback = feedback
+                                st.rerun()
 
                     if st.session_state.feedback:
-                        st.success(st.session_state.feedback)
-                        if st.button("New Test"):
+                        st.markdown("### 📊 Result Analysis")
+                        if st.session_state.q_type == "MCQ":
+                            st.metric("Score", f"{st.session_state.score}/{st.session_state.total_marks}")
+                        
+                        st.markdown(st.session_state.feedback)
+                        
+                        if st.session_state.q_type == "MCQ":
+                            with st.expander("View Answer Key"):
+                                for q in st.session_state.questions:
+                                    u = st.session_state.user_answers.get(str(q['id']))
+                                    c = q['correct_answer']
+                                    color = "green" if u == c else "red"
+                                    st.markdown(f"**Q{q['id']}**: {q['question']}")
+                                    st.markdown(f":{color}[Your Ans: {u}] | **Correct:** {c}")
+                                    st.markdown("---")
+
+                        if st.button("Start New Test"):
                             st.session_state.questions = None
                             st.rerun()
 
