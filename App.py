@@ -5,6 +5,7 @@ import base64
 import datetime
 import uuid
 import requests
+import hashlib
 from PIL import Image
 from groq import Groq
 from openai import OpenAI
@@ -34,15 +35,35 @@ if 'page' not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = "Student"
 
+# Auth State for Live Class
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False
+
+# AI Tutor State
 if "aya_messages" not in st.session_state:
     st.session_state.aya_messages = []
 
+# Mock Test State
 if 'mt_questions' not in st.session_state: st.session_state.mt_questions = None
 if 'mt_answers' not in st.session_state: st.session_state.mt_answers = {}
 if 'mt_feedback' not in st.session_state: st.session_state.mt_feedback = None
 
+# Files
+USERS_FILE = "users_database.json"
 NOTIFICATIONS_FILE = "notifications.json"
 LIVE_STATUS_FILE = "live_status.json"
+
+def create_users_db():
+    if not os.path.exists(USERS_FILE):
+        default_users = {
+            "Mohammed": hashlib.sha256("Molsalmaan@9292".encode()).hexdigest(),
+            "Muskan": hashlib.sha256("mus1234kan".encode()).hexdigest(),
+            "Prithwin": hashlib.sha256("prithwin".encode()).hexdigest()
+        }
+        with open(USERS_FILE, "w") as f:
+            json.dump(default_users, f)
 
 def init_files():
     if not os.path.exists(NOTIFICATIONS_FILE):
@@ -52,6 +73,7 @@ def init_files():
         with open(LIVE_STATUS_FILE, "w") as f:
             json.dump({"is_live": False, "topic": "", "link": ""}, f)
 
+create_users_db()
 init_files()
 
 # -----------------------------------------------------------------------------
@@ -80,6 +102,21 @@ def render_image(filename, caption=None, width=None, use_column_width=False):
     except:
         return False
 
+# Auth Helpers
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def login_user(username, password):
+    try:
+        with open(USERS_FILE, "r") as f:
+            all_users = json.load(f)
+        if username in all_users and all_users[username] == hash_password(password):
+            return True
+        return False
+    except:
+        return False
+
+# Data Helpers
 def get_notifications():
     try:
         with open(NOTIFICATIONS_FILE, "r") as f:
@@ -87,12 +124,24 @@ def get_notifications():
     except:
         return []
 
+def add_notification(message):
+    notifs = get_notifications()
+    new_notif = {"date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "message": message}
+    notifs.insert(0, new_notif)
+    with open(NOTIFICATIONS_FILE, "w") as f:
+        json.dump(notifs, f)
+
 def get_live_status():
     try:
         with open(LIVE_STATUS_FILE, "r") as f:
             return json.load(f)
     except:
         return {"is_live": False, "topic": "", "link": ""}
+
+def set_live_status(is_live, topic="", link=""):
+    status = {"is_live": is_live, "topic": topic, "link": link}
+    with open(LIVE_STATUS_FILE, "w") as f:
+        json.dump(status, f)
 
 # -----------------------------------------------------------------------------
 # 4. CSS STYLING
@@ -222,13 +271,31 @@ st.markdown("""
         opacity: 0;
         animation: fadeInUp 0.8s ease-out 0.6s forwards;
     }
+
+    /* Live Class Specifics */
+    .notif-card {
+        background: rgba(255, 215, 0, 0.1);
+        border-left: 4px solid #ffd700;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+    @keyframes pulse-btn {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    .live-button-container {
+        text-align: center;
+        margin-top: 20px;
+        animation: pulse-btn 2s infinite;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # 5. NAVIGATION (With Animated Header)
 # -----------------------------------------------------------------------------
-# Using flush-left HTML to avoid code blocks
 st.markdown("""
 <div class="founder-header-container">
 <div class="founder-headline">Other Apps Were Coded by Engineers. This One Was Coded by Your Master Tutor - Mohammed Salmaan.</div>
@@ -509,28 +576,140 @@ elif st.session_state.page == "Mock_Test":
                         st.rerun()
 
 # ==========================================
-# PAGE: LIVE CLASS
+# PAGE: LIVE CLASS (UPDATED)
 # ==========================================
 elif st.session_state.page == "Live Class":
     st.markdown("# 🔴 Molecular Man Live Classroom")
     
-    status = get_live_status()
-    if status["is_live"]:
-        st.markdown(f"""
-<div style="background: rgba(255, 0, 0, 0.1); border: 2px solid red; padding: 30px; border-radius: 15px; text-align: center;">
-<h1 style="color: #ff4444 !important;">🔴 LIVE NOW</h1>
-<h2>Topic: {status['topic']}</h2>
-<br>
-<a href="{status['link']}" target="_blank" style="background:red;color:white;padding:10px 20px;border-radius:20px;text-decoration:none;">🎥 JOIN GOOGLE MEET</a>
-</div>
-""", unsafe_allow_html=True)
+    if not st.session_state.logged_in:
+        # LOGIN VIEW
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown('<div style="font-size: 24px; text-align: center; margin-bottom: 20px;">Restricted Access</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                username = st.text_input("👤 Username")
+                password = st.text_input("🔐 Password", type="password")
+                
+                if st.button("Login to Classroom 🚀", use_container_width=True):
+                    if login_user(username, password):
+                        st.session_state.logged_in = True
+                        st.session_state.username = username
+                        st.session_state.is_admin = (username == "Mohammed")
+                        st.rerun()
+                    else:
+                        st.error("❌ Invalid Credentials")
     else:
-        st.markdown("### 💤 Class is offline")
-    
-    st.markdown("### 🔔 Notice Board")
-    for n in get_notifications():
-        st.markdown(f"**{n['date']}**: {n['message']}")
-        st.markdown("---")
+        # LOGGED IN DASHBOARD
+        col1, col2 = st.columns([3, 1])
+        with col1: 
+            st.write(f"Logged in as: **{st.session_state.username}**")
+        with col2:
+            if st.button("Logout"):
+                st.session_state.logged_in = False
+                st.session_state.username = "Student"
+                st.rerun()
+        st.divider()
+
+        if st.session_state.is_admin:
+            # --- TEACHER DASHBOARD ---
+            st.markdown("## 👨‍🏫 Teacher Command Center")
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown("### 🔴 Live Class Controls")
+                with st.container(border=True):
+                    status = get_live_status()
+                    
+                    if status["is_live"]:
+                        st.success(f"✅ Class is LIVE: {status['topic']}")
+                        st.markdown(f"**Current Link:** {status['link']}")
+                        
+                        # Direct Link Button
+                        st.markdown(f"""
+                            <div style="text-align:center; margin: 20px;">
+                                <a href="{status['link']}" target="_blank" style="text-decoration:none;">
+                                    <button style="background: linear-gradient(45deg, #00c853, #b2ff59); color: black; padding: 15px 30px; border: none; border-radius: 50px; font-weight: bold; font-size: 18px; cursor: pointer;">
+                                        🎥 Enter Meeting
+                                    </button>
+                                </a>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        if st.button("End Class ⏹️", type="primary"):
+                            set_live_status(False)
+                            st.rerun()
+                    else:
+                        st.info("Start a new session")
+                        with st.form("start_live"):
+                            topic = st.text_input("Class Topic", placeholder="e.g., Thermodynamics Part 2")
+                            # Flexible meeting link input
+                            meet_link = st.text_input("Meeting Link", placeholder="Paste Google Meet / Teams / Zoom link here...")
+                            
+                            if st.form_submit_button("Go Live 📡"):
+                                if topic and meet_link:
+                                    set_live_status(True, topic, meet_link)
+                                    add_notification(f"🔴 Live Class Started: {topic}. Join now!")
+                                    st.rerun()
+                                else:
+                                    st.warning("Please enter both Topic and Meeting Link")
+
+            with col2:
+                st.markdown("### 📢 Send Notification")
+                with st.form("notif_form"):
+                    msg = st.text_area("Announcement Message")
+                    submitted = st.form_submit_button("Send Blast 🚀", use_container_width=True)
+                    if submitted and msg:
+                        add_notification(msg)
+                        st.success("Notification Sent!")
+                
+                st.markdown("### 📜 History")
+                with st.container(border=True):
+                    for n in get_notifications()[:5]:
+                        st.markdown(f"<small>{n['date']}</small><br>{n['message']}<hr>", unsafe_allow_html=True)
+
+        else:
+            # --- STUDENT DASHBOARD ---
+            st.write("")
+            status = get_live_status()
+            
+            if status["is_live"]:
+                # Direct link button for Students
+                st.markdown(f"""
+                <div style="background: rgba(255, 0, 0, 0.1); border: 2px solid red; padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #ff4444 !important; margin:0; font-size: 40px;">🔴 LIVE NOW</h1>
+                    <h2 style="color: white !important; margin-top: 10px;">Topic: {status['topic']}</h2>
+                    <br>
+                    <div class="live-button-container">
+                        <a href="{status['link']}" target="_blank" style="text-decoration:none;">
+                            <button style="background: linear-gradient(45deg, #ff0000, #ff5252); color: white; padding: 20px 40px; border: none; border-radius: 50px; font-weight: bold; font-size: 24px; cursor: pointer; box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);">
+                                👉 CLICK TO JOIN CLASS
+                            </button>
+                        </a>
+                    </div>
+                    <p style="margin-top: 15px; color: #aaa;">(Opens Google Meet / Teams in new tab)</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <div style="padding: 40px; text-align: center; border: 2px dashed #ffd700; border-radius: 15px; margin-bottom: 20px;">
+                    <h2 style="color: #888 !important;">💤 No live class right now</h2>
+                    <p>Check notifications below for schedule.</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Notifications
+            st.markdown("### 🔔 Notice Board")
+            notifs = get_notifications()
+            if notifs:
+                for n in notifs:
+                    st.markdown(f"""
+                    <div class="notif-card">
+                        <div style="color: #ffd700; font-size: 12px; font-weight: bold;">📅 {n['date']}</div>
+                        <div style="color: white; font-size: 16px;">{n['message']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("No new announcements.")
 
 # ==========================================
 # PAGE: SERVICES
@@ -563,7 +742,6 @@ elif st.session_state.page == "Testimonials":
     st.markdown("# 💬 Student Success Stories")
     t1, t2 = st.columns(2)
     def testimonial_card(text, author):
-        # NOTE: Flush left HTML
         st.markdown(f"""
 <div style="background:white; padding:20px; border-radius:10px; border-left:5px solid #2c5282; margin-bottom:20px;">
 <div style="color:#333; font-style:italic;">"{text}"</div>
