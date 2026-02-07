@@ -422,74 +422,128 @@ Stop paying for "premium" test series. The corporate coaching giants are scared.
 # ==========================================
 # PAGE: AyA AI TUTOR
 # ==========================================
-elif st.session_state.page == "AyA_AI":
-    st.markdown("## 🧠 AyA - The Molecular Man AI")
-    st.caption("Your personal AI Tutor for Math, Science, and Coding.")
+import streamlit as st
+from groq import Groq
+import PyPDF2
 
-    try:
-        groq_api_key = st.secrets["GROQ_API_KEY"]
-        groq_client = Groq(api_key=groq_api_key)
-    except Exception:
-        st.error("⚠️ GROQ_API_KEY not found in Secrets!")
-        st.stop()
+# 1. Page Configuration
+st.set_page_config(
+    page_title="The Molecular Man | AyA AI",
+    page_icon="🧠",
+    layout="wide"
+)
 
-    SYSTEM_PROMPT = """You are **Aya**, the Lead AI Tutor at **The Molecular Man Expert Tuition Solutions**. 
-    Your Mission: Guide students from "Zero" to "Hero".
-    Tone: Encouraging, clear, patient, and intellectually rigorous.
-    Structure: 🧠 CONCEPT -> 🌍 CONTEXT -> ✍️ SOLUTION -> ✅ ANSWER -> 🚀 HERO TIP.
-    """
+# 2. CSS FIX: This makes the input text visible (White)
+st.markdown("""
+<style>
+    /* Main background color fix (optional, ensures consistency) */
+    .stApp {
+        background-color: #0E1117;
+        color: white;
+    }
 
-    with st.expander("📝 New Problem Input", expanded=(len(st.session_state.aya_messages) == 0)):
-        input_type = st.radio("Input Method:", ["📄 Text Problem", "📕 Upload PDF"], horizontal=True)
-        
-        if input_type == "📄 Text Problem":
-            user_text = st.text_area("Paste question:", height=100)
-            if st.button("Ask AyA 🚀", use_container_width=True):
-                if user_text:
-                    st.session_state.aya_messages = [] 
-                    st.session_state.aya_messages.append({"role": "user", "content": f"PROBLEM:\n{user_text}"})
-                    st.rerun()
+    /* Fix text color in the main text area (Problem Input) */
+    .stTextArea textarea {
+        color: #ffffff !important;
+        background-color: #262730 !important;
+        border: 1px solid #4B4B4B;
+    }
 
-        elif input_type == "📕 Upload PDF":
-            uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
-            if st.button("Analyze PDF 🚀", use_container_width=True):
-                if uploaded_file:
-                    try:
-                        pdf_reader = PyPDF2.PdfReader(uploaded_file)
-                        pdf_text = ""
-                        for page_num in range(min(2, len(pdf_reader.pages))):
-                            pdf_text += pdf_reader.pages[page_num].extract_text()[:3000]
-                        st.session_state.aya_messages = [] 
-                        st.session_state.aya_messages.append({"role": "user", "content": f"PROBLEM from PDF:\n{pdf_text}"})
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error: {e}")
+    /* Fix text color in the chat input (Follow-up questions) */
+    .stChatInput textarea {
+        color: #ffffff !important;
+        background-color: #262730 !important;
+    }
+    
+    /* Fix placeholder text color to be light grey */
+    ::placeholder {
+        color: #d3d3d3 !important;
+        opacity: 1;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-    for msg in st.session_state.aya_messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+# 3. Header
+st.markdown("## 🧠 AyA - The Molecular Man AI")
+st.caption("Your personal AI Tutor for Math, Science, and Coding.")
 
-    if st.session_state.aya_messages and st.session_state.aya_messages[-1]["role"] == "user":
-        with st.chat_message("assistant"):
-            with st.spinner("🤖 AyA is thinking..."):
+# 4. Initialize Session State
+if "aya_messages" not in st.session_state:
+    st.session_state.aya_messages = []
+
+# 5. API Key Setup
+try:
+    # Ensure you have .streamlit/secrets.toml with GROQ_API_KEY = "your_key"
+    groq_api_key = st.secrets["GROQ_API_KEY"]
+    groq_client = Groq(api_key=groq_api_key)
+except Exception:
+    st.error("⚠️ GROQ_API_KEY not found in Secrets! Please check your .streamlit/secrets.toml file.")
+    st.stop()
+
+SYSTEM_PROMPT = """You are **Aya**, the Lead AI Tutor at **The Molecular Man Expert Tuition Solutions**. 
+Your Mission: Guide students from "Zero" to "Hero".
+Tone: Encouraging, clear, patient, and intellectually rigorous.
+Structure: 🧠 CONCEPT -> 🌍 CONTEXT -> ✍️ SOLUTION -> ✅ ANSWER -> 🚀 HERO TIP.
+"""
+
+# 6. Input Section
+with st.expander("📝 New Problem Input", expanded=(len(st.session_state.aya_messages) == 0)):
+    input_type = st.radio("Input Method:", ["📄 Text Problem", "📕 Upload PDF"], horizontal=True)
+    
+    if input_type == "📄 Text Problem":
+        user_text = st.text_area("Paste question:", height=100)
+        if st.button("Ask AyA 🚀", use_container_width=True):
+            if user_text:
+                st.session_state.aya_messages = [] 
+                st.session_state.aya_messages.append({"role": "user", "content": f"PROBLEM:\n{user_text}"})
+                st.rerun()
+
+    elif input_type == "📕 Upload PDF":
+        uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+        if st.button("Analyze PDF 🚀", use_container_width=True):
+            if uploaded_file:
                 try:
-                    msgs = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.aya_messages
-                    chat_completion = groq_client.chat.completions.create(
-                        messages=msgs,
-                        model="llama-3.3-70b-versatile",
-                        temperature=0.5,
-                        max_tokens=6000,
-                    )
-                    response_text = chat_completion.choices[0].message.content
-                    st.markdown(response_text)
-                    st.session_state.aya_messages.append({"role": "assistant", "content": response_text})
+                    pdf_reader = PyPDF2.PdfReader(uploaded_file)
+                    pdf_text = ""
+                    # Limit to first 2 pages to save tokens
+                    for page_num in range(min(2, len(pdf_reader.pages))):
+                        pdf_text += pdf_reader.pages[page_num].extract_text()[:3000]
+                    
+                    st.session_state.aya_messages = [] 
+                    st.session_state.aya_messages.append({"role": "user", "content": f"PROBLEM from PDF:\n{pdf_text}"})
+                    st.rerun()
                 except Exception as e:
-                    st.error(f"Error: {str(e)}")
+                    st.error(f"Error reading PDF: {e}")
 
-    if st.session_state.aya_messages:
-        if user_input := st.chat_input("Ask a follow-up..."):
-            st.session_state.aya_messages.append({"role": "user", "content": user_input})
-            st.rerun()
+# 7. Display Chat History
+for msg in st.session_state.aya_messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# 8. Handle AI Response
+if st.session_state.aya_messages and st.session_state.aya_messages[-1]["role"] == "user":
+    with st.chat_message("assistant"):
+        with st.spinner("🤖 AyA is thinking..."):
+            try:
+                msgs = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.aya_messages
+                
+                chat_completion = groq_client.chat.completions.create(
+                    messages=msgs,
+                    model="llama-3.3-70b-versatile",
+                    temperature=0.5,
+                    max_tokens=6000,
+                )
+                response_text = chat_completion.choices[0].message.content
+                st.markdown(response_text)
+                st.session_state.aya_messages.append({"role": "assistant", "content": response_text})
+            except Exception as e:
+                st.error(f"Error generating response: {str(e)}")
+
+# 9. Follow-up Chat Input
+if st.session_state.aya_messages:
+    if user_input := st.chat_input("Ask a follow-up..."):
+        st.session_state.aya_messages.append({"role": "user", "content": user_input})
+        st.rerun()
 
 # ==========================================
 # PAGE: MOCK TEST
@@ -997,6 +1051,7 @@ with st.container(border=True):
         "</div>", 
         unsafe_allow_html=True
     )
+
 
 
 
