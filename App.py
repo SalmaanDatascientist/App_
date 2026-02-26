@@ -30,52 +30,331 @@ except Exception:
 # ─────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* ── RESET & BASE ───────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════
+   MOLECULAR MAN AI SUITE — DARK THEME (aggressive overrides)
+   Palette: bg #004e92→#000428 | gold #ffd700 | cyan #00ffff
+   All rules use !important to beat Streamlit's injected styles
+══════════════════════════════════════════════════════════════ */
+
+/* ── GLOBAL RESET ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
-.stApp {
+/* Force dark background everywhere */
+html, body,
+.stApp,
+.stApp > div,
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewBlockContainer"],
+[data-testid="block-container"],
+.main, .main > div,
+section.main, section.main > div {
     background: linear-gradient(135deg, #004e92 0%, #000428 100%) !important;
-    background-attachment: fixed !important;
-    font-family: 'Segoe UI', sans-serif;
+    background-color: transparent !important;
+    color: #ffffff !important;
 }
 
-/* ── ALL TEXT WHITE ────────────────────────────────────────── */
-h1, h2, h3, h4, h5, h6,
-p, div, span, li, label,
-.stMarkdown, .stText,
-[data-testid="stMarkdownContainer"] p,
-[data-testid="stCaptionContainer"] p { color: #ffffff !important; }
-
-/* ── HIDE STREAMLIT CHROME ─────────────────────────────────── */
-#MainMenu, footer, header, .stDeployButton,
+/* ── HIDE CHROME ────────────────────────────────────────────── */
+#MainMenu, footer, header,
+.stDeployButton,
+[data-testid="stToolbar"],
+[data-testid="manage-app-button"],
 section[data-testid="stSidebar"] { display: none !important; }
 
-/* ── TOP NAV BAR ────────────────────────────────────────────── */
+/* ── UNIVERSAL TEXT WHITE ───────────────────────────────────── */
+h1, h2, h3, h4, h5, h6,
+p, span, div, li, a,
+label, small, strong, em,
+.stMarkdown *, .stText *,
+[data-testid="stMarkdownContainer"] *,
+[data-testid="stCaptionContainer"] * {
+    color: #ffffff !important;
+}
+
+/* ── EXPANDER — dark background, white text ─────────────────── */
+[data-testid="stExpander"],
+[data-testid="stExpander"] > div,
+[data-testid="stExpander"] details,
+[data-testid="stExpander"] details > div,
+[data-testid="stExpander"] details summary,
+details, details > div, details > summary {
+    background: rgba(0, 10, 40, 0.85) !important;
+    background-color: rgba(0, 10, 40, 0.85) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 14px !important;
+}
+[data-testid="stExpander"] summary,
+details summary {
+    color: #e2e8f0 !important;
+    font-weight: 700 !important;
+    font-size: .95rem !important;
+    padding: 14px 18px !important;
+    background: transparent !important;
+    border-radius: 14px !important;
+    list-style: none !important;
+}
+[data-testid="stExpander"] summary::-webkit-details-marker,
+details summary::-webkit-details-marker { display: none; }
+[data-testid="stExpander"] details > div > div,
+[data-testid="stExpander"] > details > div {
+    background: transparent !important;
+    padding: 0 18px 14px !important;
+}
+
+/* ── CONTAINER / BORDER WRAPPER ─────────────────────────────── */
+div[data-testid="stVerticalBlockBorderWrapper"],
+div[data-testid="stVerticalBlockBorderWrapper"] > div {
+    background: rgba(0, 15, 50, 0.7) !important;
+    background-color: rgba(0, 15, 50, 0.7) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 16px !important;
+    color: #ffffff !important;
+}
+
+/* ── FORM CONTAINER ─────────────────────────────────────────── */
+[data-testid="stForm"],
+[data-testid="stForm"] > div {
+    background: rgba(0, 15, 50, 0.7) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 16px !important;
+}
+
+/* ── TEXT INPUT ─────────────────────────────────────────────── */
+.stTextInput > div > div > input,
+.stTextInput > div > div,
+input[type="text"], input[type="number"], input[type="email"] {
+    background: rgba(0, 20, 60, 0.9) !important;
+    background-color: rgba(0, 20, 60, 0.9) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(0,255,255,0.3) !important;
+    border-radius: 10px !important;
+    font-size: .95rem !important;
+    caret-color: #00ffff !important;
+}
+.stTextInput > div > div > input::placeholder { color: rgba(255,255,255,0.4) !important; }
+.stTextInput > div > div > input:focus {
+    border-color: #00ffff !important;
+    box-shadow: 0 0 0 2px rgba(0,255,255,0.15) !important;
+    outline: none !important;
+}
+
+/* ── TEXT AREA ──────────────────────────────────────────────── */
+.stTextArea > div,
+.stTextArea > div > div,
+.stTextArea > div > div > textarea,
+textarea {
+    background: rgba(0, 20, 60, 0.9) !important;
+    background-color: rgba(0, 20, 60, 0.9) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(0,255,255,0.3) !important;
+    border-radius: 10px !important;
+    font-size: .95rem !important;
+    caret-color: #00ffff !important;
+}
+textarea::placeholder { color: rgba(255,255,255,0.4) !important; }
+textarea:focus {
+    border-color: #00ffff !important;
+    box-shadow: 0 0 0 2px rgba(0,255,255,0.15) !important;
+    outline: none !important;
+}
+
+/* ── NUMBER INPUT ───────────────────────────────────────────── */
+.stNumberInput > div > div,
+.stNumberInput input {
+    background: rgba(0, 20, 60, 0.9) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(0,255,255,0.3) !important;
+    border-radius: 10px !important;
+}
+.stNumberInput button {
+    background: rgba(0,255,255,0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(0,255,255,0.25) !important;
+    border-radius: 8px !important;
+}
+
+/* ── SELECTBOX ──────────────────────────────────────────────── */
+.stSelectbox > div > div,
+.stSelectbox > div > div > div,
+[data-baseweb="select"],
+[data-baseweb="select"] > div {
+    background: rgba(0, 20, 60, 0.9) !important;
+    background-color: rgba(0, 20, 60, 0.9) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(0,255,255,0.3) !important;
+    border-radius: 10px !important;
+}
+[data-baseweb="select"] span { color: #ffffff !important; }
+
+/* Dropdown menu */
+[data-baseweb="popover"],
+[data-baseweb="popover"] > div,
+[data-baseweb="menu"],
+ul[role="listbox"] {
+    background: #031a3f !important;
+    background-color: #031a3f !important;
+    border: 1px solid rgba(0,255,255,0.2) !important;
+    border-radius: 12px !important;
+}
+li[role="option"], div[role="option"] {
+    color: #e2e8f0 !important;
+    background: transparent !important;
+    padding: 10px 14px !important;
+}
+li[role="option"]:hover, div[role="option"]:hover,
+li[role="option"][aria-selected="true"],
+div[role="option"][aria-selected="true"] {
+    background: rgba(0,255,255,0.1) !important;
+    color: #00ffff !important;
+}
+
+/* ── RADIO BUTTONS ──────────────────────────────────────────── */
+.stRadio > div,
+.stRadio > label,
+[data-testid="stRadio"] > div,
+[data-testid="stRadio"] label {
+    color: #e2e8f0 !important;
+    background: transparent !important;
+}
+.stRadio label p,
+[data-testid="stRadio"] label p { color: #e2e8f0 !important; }
+
+/* ── FILE UPLOADER ──────────────────────────────────────────── */
+[data-testid="stFileUploader"],
+[data-testid="stFileUploaderDropzone"],
+[data-testid="stFileUploader"] > div {
+    background: rgba(0, 20, 60, 0.8) !important;
+    background-color: rgba(0, 20, 60, 0.8) !important;
+    border: 1px dashed rgba(0,255,255,0.35) !important;
+    border-radius: 12px !important;
+    color: #e2e8f0 !important;
+}
+[data-testid="stFileUploader"] span,
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploaderDropzone"] span { color: #a0aec0 !important; }
+
+/* ── BUTTONS ────────────────────────────────────────────────── */
+.stButton > button,
+.stButton > button > div,
+.stButton > button > div > p {
+    background: linear-gradient(135deg, #ffd700 0%, #ffb900 100%) !important;
+    color: #000000 !important;
+    border-radius: 50px !important;
+    border: none !important;
+    font-weight: 800 !important;
+    font-size: .92rem !important;
+    padding: 13px 28px !important;
+    letter-spacing: .8px !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 4px 20px rgba(255,215,0,0.35) !important;
+    transition: all .25s !important;
+    width: 100%;
+}
+.stButton > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 28px rgba(255,215,0,0.6) !important;
+    background: linear-gradient(135deg, #ffe44d 0%, #ffd000 100%) !important;
+}
+.stButton > button p { color: #000000 !important; }
+
+/* Form submit button */
+div[data-testid="stFormSubmitButton"] > button,
+div[data-testid="stFormSubmitButton"] > button > div,
+div[data-testid="stFormSubmitButton"] > button p {
+    background: linear-gradient(135deg, #004e92 0%, #3b6b9e 100%) !important;
+    color: #ffffff !important;
+    border: 2px solid rgba(0,255,255,0.5) !important;
+    border-radius: 50px !important;
+    font-weight: 800 !important;
+    font-size: .92rem !important;
+    padding: 13px 28px !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 4px 20px rgba(0,200,255,0.25) !important;
+}
+div[data-testid="stFormSubmitButton"] > button p { color: #ffffff !important; }
+div[data-testid="stFormSubmitButton"] > button:hover {
+    box-shadow: 0 6px 28px rgba(0,255,255,0.45) !important;
+    border-color: #00ffff !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ── CHAT ───────────────────────────────────────────────────── */
+.stChatMessage,
+[data-testid="stChatMessage"],
+[data-testid="stChatMessage"] > div {
+    background: rgba(0, 20, 60, 0.75) !important;
+    background-color: rgba(0, 20, 60, 0.75) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 14px !important;
+    margin-bottom: 10px !important;
+    color: #e2e8f0 !important;
+}
+[data-testid="stChatMessageContent"] p,
+[data-testid="stChatMessageContent"] * { color: #e2e8f0 !important; }
+
+[data-testid="stChatInput"],
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] > div > div,
+[data-testid="stChatInputTextArea"],
+[data-testid="stChatInput"] textarea {
+    background: rgba(0, 20, 60, 0.9) !important;
+    background-color: rgba(0, 20, 60, 0.9) !important;
+    border: 1px solid rgba(0,255,255,0.3) !important;
+    border-radius: 30px !important;
+    color: #ffffff !important;
+}
+
+/* ── METRIC ─────────────────────────────────────────────────── */
+[data-testid="stMetric"],
+[data-testid="stMetric"] > div {
+    background: rgba(0, 20, 60, 0.7) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+}
+[data-testid="stMetricValue"] { color: #ffd700 !important; }
+[data-testid="stMetricLabel"] { color: #a0aec0 !important; }
+[data-testid="stMetricDelta"] { color: #48ff00 !important; }
+
+/* ── ALERTS ─────────────────────────────────────────────────── */
+[data-testid="stAlert"],
+.stSuccess, .element-container .stSuccess { background: rgba(72,255,0,0.08) !important; border: 1px solid rgba(72,255,0,0.3) !important; border-radius: 10px !important; }
+.stWarning, .element-container .stWarning { background: rgba(255,215,0,0.08) !important; border: 1px solid rgba(255,215,0,0.35) !important; border-radius: 10px !important; }
+.stError,   .element-container .stError   { background: rgba(255,70,70,0.08) !important;  border: 1px solid rgba(255,70,70,0.35) !important; border-radius: 10px !important; }
+.stInfo,    .element-container .stInfo    { background: rgba(0,255,255,0.06) !important;  border: 1px solid rgba(0,255,255,0.25) !important; border-radius: 10px !important; }
+[data-testid="stAlert"] p { color: #ffffff !important; }
+
+/* ── SPINNER ────────────────────────────────────────────────── */
+.stSpinner > div { border-top-color: #ffd700 !important; }
+[data-testid="stSpinner"] p { color: #e2e8f0 !important; }
+
+/* ── DIVIDER ────────────────────────────────────────────────── */
+hr { border-color: rgba(255,255,255,0.1) !important; margin: 20px 0 !important; }
+
+/* ── SCROLLBAR ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.4); border-radius: 4px; }
+
+/* ── CUSTOM CLASSES ─────────────────────────────────────────── */
 .mm-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 28px;
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     margin: -1rem -1rem 0 -1rem;
     position: sticky; top: 0; z-index: 999;
-    flex-wrap: wrap; gap: 12px;
+    flex-wrap: wrap; gap: 10px;
 }
-.mm-brand {
-    display: flex; align-items: center; gap: 14px;
-}
-.mm-brand-name {
-    font-size: 1.15rem; font-weight: 800;
-    color: #ffffff !important;
-    letter-spacing: .3px; line-height: 1.2;
-}
-.mm-brand-sub { font-size: .75rem; color: #ffd700 !important; letter-spacing: 1px; }
-.mm-tab-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.mm-brand { display: flex; align-items: center; gap: 12px; }
+.mm-brand-name  { font-size: 1.05rem; font-weight: 800; color: #ffffff !important; line-height: 1.2; }
+.mm-brand-sub   { font-size: .72rem; color: #ffd700 !important; letter-spacing: 1px; }
+.mm-tab-row     { display: flex; gap: 8px; flex-wrap: wrap; }
 .mm-tab {
-    padding: 9px 22px; border-radius: 25px; cursor: pointer;
-    font-size: .88rem; font-weight: 700; letter-spacing: .5px;
+    padding: 8px 18px; border-radius: 25px; cursor: pointer;
+    font-size: .82rem; font-weight: 700; letter-spacing: .5px;
     border: 1px solid rgba(255,255,255,0.2);
     background: rgba(255,255,255,0.06);
     color: #ffffff !important; transition: all .2s;
@@ -84,213 +363,28 @@ section[data-testid="stSidebar"] { display: none !important; }
 .mm-tab:hover { border-color: rgba(0,255,255,0.5); background: rgba(0,255,255,0.08); }
 .mm-tab.active-aya {
     background: linear-gradient(90deg,#1a0533,#6d28d9,#1a0533) !important;
-    border-color: rgba(167,139,250,0.5) !important;
+    border-color: rgba(167,139,250,0.55) !important;
     box-shadow: 0 4px 18px rgba(109,40,217,0.45);
 }
 .mm-tab.active-mt {
     background: linear-gradient(90deg,#1e3a5f,#3b6b9e,#1e3a5f) !important;
-    border-color: rgba(0,255,255,0.5) !important;
+    border-color: rgba(0,255,255,0.55) !important;
     box-shadow: 0 4px 18px rgba(0,200,255,0.3);
 }
-
-/* ── GLASS CARDS ────────────────────────────────────────────── */
-.glass-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.13);
-    border-radius: 18px; padding: 24px; margin-bottom: 20px;
-}
-.gold-card {
-    background: rgba(255,215,0,0.06);
-    border: 1px solid rgba(255,215,0,0.25);
-    border-radius: 18px; padding: 24px; margin-bottom: 20px;
-}
-.cyan-card {
-    background: rgba(0,255,255,0.05);
-    border: 1px solid rgba(0,255,255,0.22);
-    border-radius: 18px; padding: 24px; margin-bottom: 20px;
-}
-.purple-card {
-    background: rgba(109,40,217,0.12);
-    border: 1px solid rgba(167,139,250,0.3);
-    border-radius: 18px; padding: 24px; margin-bottom: 20px;
-}
-
-/* ── SECTION LABELS ─────────────────────────────────────────── */
-.section-label {
-    font-size: .7rem; font-weight: 800; letter-spacing: 2.5px;
-    text-transform: uppercase; padding: 4px 12px; border-radius: 20px;
-    display: inline-block; margin-bottom: 10px;
-}
-.lbl-gold { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.35); color: #ffd700 !important; }
-.lbl-cyan { background: rgba(0,255,255,0.08); border: 1px solid rgba(0,255,255,0.3); color: #00ffff !important; }
-.lbl-purple { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.35); color: #c4b5fd !important; }
-
-/* ── STAT BOX ───────────────────────────────────────────────── */
+.glass-card  { background: rgba(0,20,60,0.6); border: 1px solid rgba(255,255,255,0.13); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+.gold-card   { background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.25); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+.cyan-card   { background: rgba(0,255,255,0.04); border: 1px solid rgba(0,255,255,0.22); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+.purple-card { background: rgba(109,40,217,0.1); border: 1px solid rgba(167,139,250,0.28); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+.section-label { font-size: .68rem; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 10px; }
+.lbl-gold   { background: rgba(255,215,0,0.1);   border: 1px solid rgba(255,215,0,0.4);   color: #ffd700 !important; }
+.lbl-cyan   { background: rgba(0,255,255,0.08);   border: 1px solid rgba(0,255,255,0.35);  color: #00ffff !important; }
+.lbl-purple { background: rgba(167,139,250,0.1);  border: 1px solid rgba(167,139,250,0.4); color: #c4b5fd !important; }
 .stat-box { text-align: center; padding: 16px 8px; }
-.stat-num {
-    font-size: 2rem; font-weight: 900;
-    background: linear-gradient(to right, #ffd700, #00ffff);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    font-family: 'Rajdhani', sans-serif;
-}
-.stat-lbl { font-size: .75rem; color: #a0aec0 !important; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-
-/* ── BUTTONS ────────────────────────────────────────────────── */
-.stButton > button {
-    background: linear-gradient(135deg, #ffd700 0%, #ffb900 100%) !important;
-    color: #000000 !important;
-    border-radius: 50px !important;
-    border: none !important;
-    font-weight: 800 !important;
-    font-size: .9rem !important;
-    padding: 12px 28px !important;
-    letter-spacing: .8px !important;
-    text-transform: uppercase !important;
-    box-shadow: 0 4px 16px rgba(255,215,0,0.3) !important;
-    transition: all .25s !important;
-    width: 100%;
-}
-.stButton > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 24px rgba(255,215,0,0.55) !important;
-    background: linear-gradient(135deg, #ffe44d 0%, #ffd000 100%) !important;
-    color: #000000 !important;
-}
-div[data-testid="stFormSubmitButton"] > button {
-    background: linear-gradient(135deg, #004e92 0%, #3b6b9e 100%) !important;
-    color: #ffffff !important;
-    border: 2px solid rgba(0,255,255,0.5) !important;
-    border-radius: 50px !important;
-    font-weight: 800 !important;
-    padding: 12px 28px !important;
-    letter-spacing: .8px !important;
-    text-transform: uppercase !important;
-    box-shadow: 0 4px 16px rgba(0,200,255,0.25) !important;
-    transition: all .25s !important;
-    width: 100%;
-}
-div[data-testid="stFormSubmitButton"] > button p { color: #ffffff !important; }
-div[data-testid="stFormSubmitButton"] > button:hover {
-    box-shadow: 0 6px 24px rgba(0,255,255,0.4) !important;
-    border-color: #00ffff !important;
-    transform: translateY(-2px) !important;
-}
-div[data-testid="stFormSubmitButton"] > button:hover p { color: #ffffff !important; }
-
-/* ── INPUTS ─────────────────────────────────────────────────── */
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea,
-.stNumberInput input {
-    background: rgba(255,255,255,0.08) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.25) !important;
-    border-radius: 10px !important;
-    font-size: .95rem !important;
-}
-.stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus {
-    border-color: rgba(0,255,255,0.5) !important;
-    box-shadow: 0 0 0 2px rgba(0,255,255,0.12) !important;
-}
-.stSelectbox > div > div > div {
-    background: rgba(255,255,255,0.08) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.25) !important;
-    border-radius: 10px !important;
-}
-div[data-baseweb="popover"], div[data-baseweb="menu"] {
-    background: #0a1628 !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
-    border-radius: 10px !important;
-}
-div[role="option"] { color: #ffffff !important; }
-div[role="option"]:hover { background: rgba(0,255,255,0.1) !important; }
-
-/* ── RADIO ──────────────────────────────────────────────────── */
-.stRadio label { color: #e2e8f0 !important; font-weight: 500; }
-.stRadio > div { gap: 10px; }
-
-/* ── FILE UPLOADER ──────────────────────────────────────────── */
-[data-testid="stFileUploader"] {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px dashed rgba(255,255,255,0.25) !important;
-    border-radius: 12px !important;
-}
-
-/* ── EXPANDER ───────────────────────────────────────────────── */
-[data-testid="stExpander"] {
-    background: rgba(255,255,255,0.04) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 12px !important;
-}
-[data-testid="stExpander"] summary { color: #e2e8f0 !important; font-weight: 600; }
-
-/* ── CHAT MESSAGES ──────────────────────────────────────────── */
-.stChatMessage {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 14px !important;
-    margin-bottom: 10px !important;
-}
-[data-testid="stChatMessageContent"] p { color: #e2e8f0 !important; }
-[data-testid="stChatInput"] > div > div {
-    background: rgba(255,255,255,0.08) !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 30px !important;
-    color: #ffffff !important;
-}
-[data-testid="stChatInput"] textarea { color: #ffffff !important; }
-
-/* ── METRIC ─────────────────────────────────────────────────── */
-[data-testid="stMetric"] {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
-    border-radius: 14px !important;
-    padding: 16px !important;
-}
-[data-testid="stMetricValue"] { color: #ffd700 !important; }
-[data-testid="stMetricLabel"] { color: #a0aec0 !important; }
-
-/* ── SUCCESS / WARNING / ERROR ──────────────────────────────── */
-.stSuccess { background: rgba(72,255,0,0.08) !important; border: 1px solid rgba(72,255,0,0.25) !important; border-radius: 10px !important; }
-.stWarning { background: rgba(255,215,0,0.08) !important; border: 1px solid rgba(255,215,0,0.3) !important; border-radius: 10px !important; }
-.stError   { background: rgba(255,70,70,0.08) !important; border: 1px solid rgba(255,70,70,0.3) !important; border-radius: 10px !important; }
-.stInfo    { background: rgba(0,255,255,0.06) !important; border: 1px solid rgba(0,255,255,0.25) !important; border-radius: 10px !important; }
-
-/* ── MCQ OPTION HIGHLIGHT ───────────────────────────────────── */
+.stat-num { font-size: 2rem; font-weight: 900; background: linear-gradient(to right,#ffd700,#00ffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-lbl { font-size: .72rem; color: #a0aec0 !important; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+.score-badge { display: inline-block; padding: 10px 28px; border-radius: 30px; font-weight: 900; font-size: 1.6rem; background: linear-gradient(135deg,rgba(255,215,0,0.15),rgba(0,255,255,0.1)); border: 2px solid rgba(255,215,0,0.45); color: #ffd700 !important; }
 .ans-correct { color: #48ff00 !important; font-weight: 700; }
 .ans-wrong   { color: #ff6b6b !important; font-weight: 700; }
-
-/* ── DIVIDER ────────────────────────────────────────────────── */
-hr { border-color: rgba(255,255,255,0.1) !important; margin: 20px 0 !important; }
-
-/* ── SPINNER ────────────────────────────────────────────────── */
-.stSpinner > div { border-top-color: #ffd700 !important; }
-
-/* ── SCORE BADGE ────────────────────────────────────────────── */
-.score-badge {
-    display: inline-block; padding: 10px 28px; border-radius: 30px;
-    font-weight: 900; font-size: 1.6rem;
-    background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(0,255,255,0.1));
-    border: 2px solid rgba(255,215,0,0.45);
-    color: #ffd700 !important;
-    text-align: center;
-}
-
-/* ── CONTAINER OVERRIDE ─────────────────────────────────────── */
-div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255,255,255,0.04) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 16px !important;
-}
-
-/* ── NUMBER INPUT ───────────────────────────────────────────── */
-.stNumberInput button { background: rgba(255,255,255,0.1) !important; color: #fff !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 8px !important; }
-
-/* ── SCROLLBAR ──────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.35); border-radius: 4px; }
 </style>
 """, unsafe_allow_html=True)
 
