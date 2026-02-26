@@ -17,75 +17,232 @@ try:
 except Exception:
     pass
 
-# ── MINIMAL CSS (config.toml handles dark base) ───────────────
+# ── FORCE DARK MODE (no external config needed) ───────────────
 st.markdown("""<style>
-#MainMenu,footer,header,.stDeployButton,[data-testid="stToolbar"],
-section[data-testid="stSidebar"]{display:none!important}
+/* ═══ FORCE DARK BASE ═══ */
+html, body, [data-testid="stAppViewContainer"], .stApp,
+[data-testid="block-container"], [data-testid="stMain"],
+[class*="main"], .main, section.main {
+  background: linear-gradient(135deg,#004e92 0%,#000428 100%) !important;
+  color: #e2e8f0 !important;
+}
 
-.stApp,[data-testid="stAppViewContainer"],[data-testid="block-container"]{
-  background:linear-gradient(135deg,#004e92 0%,#000428 100%)!important}
+/* Force ALL white/light backgrounds to dark */
+*, *::before, *::after {
+  --background-color: #00122e !important;
+}
 
-/* Inputs */
-input,textarea,[data-baseweb="input"] input,.stTextInput input,
-.stTextArea textarea,.stNumberInput input{
-  background:#00122e!important;color:#fff!important;
-  border:1px solid rgba(0,255,255,.4)!important;border-radius:10px!important;
-  caret-color:#00ffff!important}
-input::placeholder,textarea::placeholder{color:rgba(255,255,255,.4)!important}
+/* ═══ KILL ALL WHITE BACKGROUNDS ═══ */
+div, section, article, aside, nav, main, header, footer,
+[class*="css"], [class*="st-"], [class*="block"] {
+  color: inherit;
+}
 
-/* Selectbox */
-[data-baseweb="select"]>div{background:#00122e!important;color:#fff!important;
-  border:1px solid rgba(0,255,255,.4)!important;border-radius:10px!important}
-[data-baseweb="popover"],[data-baseweb="menu"]{
-  background:#031a3f!important;border:1px solid rgba(0,255,255,.2)!important;border-radius:12px!important}
-li[role="option"],div[role="option"]{color:#e2e8f0!important}
-li[role="option"]:hover{background:rgba(0,255,255,.12)!important}
+/* Selectbox & dropdowns — the main culprit */
+[data-baseweb="select"] *,
+[data-baseweb="popover"] *,
+[data-baseweb="menu"] *,
+[data-baseweb="list"] *,
+[role="listbox"],
+[role="listbox"] *,
+[role="option"],
+ul[role="listbox"],
+li[role="option"] {
+  background-color: #031a3f !important;
+  color: #e2e8f0 !important;
+}
+[data-baseweb="popover"] {
+  background: #031a3f !important;
+  border: 1px solid rgba(0,255,255,.25) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.6) !important;
+}
+[data-baseweb="menu"] {
+  background: #031a3f !important;
+  border-radius: 10px !important;
+}
+li[role="option"]:hover,
+div[role="option"]:hover,
+[aria-selected="true"][role="option"] {
+  background: rgba(0,255,255,.15) !important;
+  color: #fff !important;
+}
+/* Selectbox trigger */
+[data-baseweb="select"] > div {
+  background: #00122e !important;
+  color: #fff !important;
+  border: 1px solid rgba(0,255,255,.4) !important;
+  border-radius: 10px !important;
+}
+[data-baseweb="select"] span,
+[data-baseweb="select"] div,
+[data-baseweb="select"] svg {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  fill: #e2e8f0 !important;
+}
 
-/* Containers */
-div[data-testid="stVerticalBlockBorderWrapper"]{
-  background:rgba(0,18,46,.75)!important;
-  border:1px solid rgba(255,255,255,.15)!important;border-radius:16px!important}
-[data-testid="stExpander"],details{
-  background:#00122e!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:14px!important}
-details summary{color:#e2e8f0!important;font-weight:700!important}
+/* Number input & spinbox */
+[data-baseweb="spinner"] input,
+[data-testid="stNumberInput"] input,
+input[type="number"] {
+  background: #00122e !important;
+  color: #fff !important;
+  border: 1px solid rgba(0,255,255,.4) !important;
+  border-radius: 10px !important;
+}
+[data-baseweb="spinner"] button,
+[data-testid="stNumberInput"] button {
+  background: #001a3f !important;
+  color: #fff !important;
+  border-color: rgba(0,255,255,.3) !important;
+}
 
-/* Gold button */
-.stButton>button{background:linear-gradient(135deg,#ffd700,#ffb900)!important;
-  color:#000!important;border:none!important;border-radius:50px!important;
-  font-weight:800!important;text-transform:uppercase!important;letter-spacing:.8px!important;
-  box-shadow:0 4px 16px rgba(255,215,0,.35)!important}
-.stButton>button:hover{transform:translateY(-2px)!important;
-  box-shadow:0 6px 24px rgba(255,215,0,.6)!important}
-.stButton>button p,.stButton>button span,.stButton>button div{color:#000!important}
+/* All text inputs & textareas */
+input, textarea,
+[data-baseweb="input"] input,
+.stTextInput input,
+.stTextArea textarea {
+  background: #00122e !important;
+  color: #fff !important;
+  border: 1px solid rgba(0,255,255,.4) !important;
+  border-radius: 10px !important;
+  caret-color: #00ffff !important;
+}
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,.4) !important; }
 
-/* Alerts */
-[data-testid="stAlert"]{border-radius:12px!important}
+/* Radio buttons */
+[data-testid="stRadio"] label,
+[data-testid="stRadio"] p,
+.stRadio label p { color: #e2e8f0 !important; }
+[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p { color: #e2e8f0 !important; }
+
+/* Expanders */
+[data-testid="stExpander"], details {
+  background: #00122e !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: 14px !important;
+}
+details summary, details summary * { color: #e2e8f0 !important; font-weight: 700 !important; }
+details[open] > div { background: #00122e !important; }
+
+/* Containers / cards */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+  background: rgba(0,18,46,.75) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: 16px !important;
+}
+
+/* Metrics */
+[data-testid="stMetric"] {
+  background: rgba(0,18,46,.7) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+}
+[data-testid="stMetricValue"] { color: #ffd700 !important; }
+[data-testid="stMetricLabel"] p { color: #94a3b8 !important; }
 
 /* Tabs */
-[data-testid="stTabs"] [role="tablist"]{background:rgba(0,0,0,.3)!important;
-  border-radius:30px!important;padding:4px!important;gap:4px!important}
-[data-testid="stTabs"] button[role="tab"]{border-radius:25px!important;
-  color:#94a3b8!important;font-weight:700!important;letter-spacing:.5px!important;padding:10px 24px!important}
-[data-testid="stTabs"] button[role="tab"][aria-selected="true"]{
-  background:linear-gradient(90deg,#6d28d9,#3b82f6)!important;color:#fff!important;
-  box-shadow:0 4px 16px rgba(109,40,217,.4)!important}
+[data-testid="stTabs"] [role="tablist"] {
+  background: rgba(0,0,0,.3) !important;
+  border-radius: 30px !important;
+  padding: 4px !important;
+  gap: 4px !important;
+}
+[data-testid="stTabs"] button[role="tab"] {
+  border-radius: 25px !important;
+  color: #94a3b8 !important;
+  font-weight: 700 !important;
+  letter-spacing: .5px !important;
+  padding: 10px 24px !important;
+  background: transparent !important;
+}
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+  background: linear-gradient(90deg,#6d28d9,#3b82f6) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(109,40,217,.4) !important;
+}
+[data-testid="stTabs"] [role="tabpanel"] {
+  background: transparent !important;
+}
 
 /* Chat */
-[data-testid="stChatMessage"]{
-  background:rgba(0,18,46,.7)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important}
-[data-testid="stChatInput"]>div{background:#00122e!important;
-  border:1px solid rgba(0,255,255,.3)!important;border-radius:30px!important}
+[data-testid="stChatMessage"] {
+  background: rgba(0,18,46,.7) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 14px !important;
+}
+[data-testid="stChatInput"] > div {
+  background: #00122e !important;
+  border: 1px solid rgba(0,255,255,.3) !important;
+  border-radius: 30px !important;
+}
+[data-testid="stChatInput"] textarea {
+  background: transparent !important;
+  color: #fff !important;
+}
 
-/* Metric */
-[data-testid="stMetric"]{background:rgba(0,18,46,.7)!important;
-  border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;padding:16px!important}
-[data-testid="stMetricValue"]{color:#ffd700!important}
+/* Gold buttons */
+.stButton > button {
+  background: linear-gradient(135deg,#ffd700,#ffb900) !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 50px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .8px !important;
+  box-shadow: 0 4px 16px rgba(255,215,0,.35) !important;
+}
+.stButton > button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(255,215,0,.6) !important;
+}
+.stButton > button p, .stButton > button span, .stButton > button div { color: #000 !important; }
 
-/* Radio */
-.stRadio label p{color:#e2e8f0!important}
+/* Alerts */
+[data-testid="stAlert"] { border-radius: 12px !important; }
 
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-thumb{background:rgba(255,215,0,.4);border-radius:4px}
+/* Spinner / loader */
+[data-testid="stSpinner"] * { color: #ffd700 !important; }
+
+/* Markdown text */
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3 {
+  color: #e2e8f0 !important;
+}
+
+/* File uploader */
+[data-testid="stFileUploader"] {
+  background: #00122e !important;
+  border: 1px dashed rgba(0,255,255,.4) !important;
+  border-radius: 12px !important;
+}
+[data-testid="stFileUploader"] * { color: #e2e8f0 !important; }
+[data-testid="stFileUploaderDropzoneInstructions"] * { color: #94a3b8 !important; }
+
+/* Dividers */
+hr { border-color: rgba(255,255,255,.1) !important; }
+
+/* Hide chrome */
+#MainMenu, footer, header, .stDeployButton,
+[data-testid="stToolbar"],
+section[data-testid="stSidebar"] { display: none !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #000428; }
+::-webkit-scrollbar-thumb { background: rgba(255,215,0,.4); border-radius: 4px; }
+
+/* Tooltip / popover overlays */
+[data-testid="tooltipHoverTarget"] *,
+[data-testid="stTooltipContent"] * { color: #e2e8f0 !important; }
+
+/* Column gaps */
+[data-testid="column"] { background: transparent !important; }
 </style>""", unsafe_allow_html=True)
 
 # ── HELPERS ───────────────────────────────────────────────────
@@ -197,7 +354,7 @@ def grade_descriptive(questions, answers, board, cls, subject, model):
 
 def best_model():
     for m in BEST_MODELS:
-        return m  # Always try best first; Groq handles fallback
+        return m
 
 # ── HEADER ────────────────────────────────────────────────────
 logo = get_img_b64("logo.png")
@@ -216,7 +373,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── TABS (native Streamlit — no custom button nonsense) ────────
+# ── TABS ────────────────────────────────────────────────────
 tab_aya, tab_mt = st.tabs(["🤖  AyA Tutor", "📝  Mock Tests"])
 
 # ══════════════════════════════════════════════════════════════
@@ -239,7 +396,6 @@ with tab_aya:
     </div>
     """, unsafe_allow_html=True)
 
-    # Stats
     c1,c2,c3,c4 = st.columns(4)
     for col,num,lbl in [(c1,"24/7","Always Online"),(c2,"₹0","Cost Forever"),
                          (c3,"6+","Boards"),(c4,"∞","Questions")]:
@@ -247,7 +403,6 @@ with tab_aya:
 
     st.divider()
 
-    # Input
     with st.expander("📝 New Problem", expanded=(len(st.session_state.aya_msgs)==0)):
         mode = st.radio("Input:", ["✏️ Type Problem","📄 Upload PDF"], horizontal=True)
 
@@ -273,7 +428,6 @@ with tab_aya:
                     except Exception as e: st.error(f"PDF read error: {e}")
                 else: st.warning("Please upload a PDF first.")
 
-    # Chat history
     for msg in st.session_state.aya_msgs:
         with st.chat_message(msg["role"]):
             c = msg["content"]
@@ -281,7 +435,6 @@ with tab_aya:
                 with st.expander("📄 Uploaded Problem", expanded=False): st.markdown(c)
             else: st.markdown(c)
 
-    # AI response trigger
     if st.session_state.aya_msgs and st.session_state.aya_msgs[-1]["role"]=="user":
         with st.chat_message("assistant"):
             with st.spinner("AyA is thinking…"):
@@ -301,7 +454,6 @@ with tab_aya:
                     st.session_state.aya_msgs.append({"role":"assistant","content":resp})
                 except Exception as e: st.error(f"Error: {e}")
 
-    # Follow-up
     if st.session_state.aya_msgs:
         if fu := st.chat_input("Ask AyA a follow-up…"):
             st.session_state.aya_msgs.append({"role":"user","content":fu})
@@ -329,7 +481,6 @@ with tab_mt:
 
     MODEL = best_model()
 
-    # ── VIEW A: CONFIG ────────────────────────────────────────
     if not st.session_state.mt_qs:
         st.markdown("#### ⚙️ Configure Your Test")
         with st.container(border=True):
@@ -363,7 +514,6 @@ with tab_mt:
                         st.session_state.mt_qs = qs
                         st.rerun()
 
-    # ── VIEW B: RESULTS ───────────────────────────────────────
     elif st.session_state.mt_feedback:
         cfg   = st.session_state.mt_cfg
         score = st.session_state.mt_score
@@ -414,7 +564,6 @@ with tab_mt:
             st.session_state.mt_score    = 0
             st.rerun()
 
-    # ── VIEW C: EXAM (no st.form — uses session_state per question) ──
     else:
         cfg = st.session_state.mt_cfg
         st.markdown(f"""
@@ -430,7 +579,6 @@ with tab_mt:
         </div>
         """, unsafe_allow_html=True)
 
-        # Render questions WITHOUT st.form (avoids memory spike)
         for q in st.session_state.mt_qs:
             qid = str(q["id"])
             m_txt = f" *({q.get('marks',1)} marks)*" if st.session_state.mt_qtype=="Descriptive" else ""
@@ -451,7 +599,6 @@ with tab_mt:
                 st.session_state.mt_answers[qid] = ans
             st.divider()
 
-        # Submit
         if st.button("✅ SUBMIT EXAM", key="submit_exam"):
             qtype = st.session_state.mt_qtype
             if qtype == "MCQ":
