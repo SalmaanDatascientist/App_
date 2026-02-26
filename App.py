@@ -17,123 +17,160 @@ try:
 except Exception:
     pass
 
-# ── FORCE DARK MODE (no external config needed) ───────────────
-st.markdown("""<style>
-/* ═══ FORCE DARK BASE ═══ */
-html, body, [data-testid="stAppViewContainer"], .stApp,
-[data-testid="block-container"], [data-testid="stMain"],
-[class*="main"], .main, section.main {
+# ── FORCE DARK MODE — NUCLEAR EDITION ────────────────────────
+# Injects CSS at <head> level AND a <style> tag at body root
+# to capture BaseWeb portals rendered outside .stApp
+st.markdown("""
+<style>
+/* ═══ 1. COLOR SCHEME — tells browser & BaseWeb to use dark ═══ */
+:root {
+  color-scheme: dark !important;
+}
+html {
+  background: #000428 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ═══ 2. APP BACKGROUND ═══ */
+body,
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="block-container"],
+section.main,
+.main {
   background: linear-gradient(135deg,#004e92 0%,#000428 100%) !important;
   color: #e2e8f0 !important;
 }
 
-/* Force ALL white/light backgrounds to dark */
-*, *::before, *::after {
-  --background-color: #00122e !important;
-}
-
-/* ═══ KILL ALL WHITE BACKGROUNDS ═══ */
-div, section, article, aside, nav, main, header, footer,
-[class*="css"], [class*="st-"], [class*="block"] {
-  color: inherit;
-}
-
-/* Selectbox & dropdowns — the main culprit */
-[data-baseweb="select"] *,
-[data-baseweb="popover"] *,
-[data-baseweb="menu"] *,
-[data-baseweb="list"] *,
-[role="listbox"],
-[role="listbox"] *,
-[role="option"],
-ul[role="listbox"],
-li[role="option"] {
+/* ═══ 3. PORTAL OVERLAYS (rendered at body root, NOT inside .stApp) ═══ */
+/* These are the white dropdown popups */
+body > div[class],
+body > div[data-baseweb],
+body > div > div[data-baseweb],
+body > div[id] > div,
+div[data-baseweb="popover"],
+div[data-baseweb="popover"] > div,
+div[data-baseweb="popover"] > div > div,
+div[data-baseweb="popover"] > div > div > div,
+div[data-baseweb="popover"] > div > div > div > div,
+div[data-baseweb="popover"] ul,
+div[data-baseweb="popover"] li {
   background-color: #031a3f !important;
   color: #e2e8f0 !important;
 }
-[data-baseweb="popover"] {
-  background: #031a3f !important;
-  border: 1px solid rgba(0,255,255,.25) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,.6) !important;
+
+/* ═══ 4. MENU & LISTBOX inside portals ═══ */
+[data-baseweb="menu"],
+[data-baseweb="menu"] *,
+ul[role="listbox"],
+ul[role="listbox"] *,
+div[role="listbox"],
+div[role="listbox"] * {
+  background-color: #031a3f !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(0,255,255,.25) !important;
 }
-[data-baseweb="menu"] {
-  background: #031a3f !important;
-  border-radius: 10px !important;
+
+/* Individual options */
+li[role="option"],
+div[role="option"],
+[data-baseweb="menu-item"],
+[data-baseweb="menu-item"] * {
+  background-color: #031a3f !important;
+  color: #e2e8f0 !important;
 }
 li[role="option"]:hover,
 div[role="option"]:hover,
-[aria-selected="true"][role="option"] {
-  background: rgba(0,255,255,.15) !important;
-  color: #fff !important;
+li[role="option"][aria-selected="true"],
+div[role="option"][aria-selected="true"],
+[data-baseweb="menu-item"]:hover {
+  background-color: rgba(0,255,255,.18) !important;
+  color: #ffffff !important;
 }
-/* Selectbox trigger */
-[data-baseweb="select"] > div {
-  background: #00122e !important;
-  color: #fff !important;
-  border: 1px solid rgba(0,255,255,.4) !important;
+
+/* Popover box itself */
+[data-baseweb="popover"] {
+  background: #031a3f !important;
+  border: 1px solid rgba(0,255,255,.28) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,.8) !important;
+  overflow: hidden !important;
+}
+
+/* ═══ 5. SELECT TRIGGER ═══ */
+[data-baseweb="select"],
+[data-baseweb="select"] > div,
+[data-baseweb="select"] > div > div {
+  background-color: #00122e !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(0,255,255,.4) !important;
   border-radius: 10px !important;
 }
 [data-baseweb="select"] span,
-[data-baseweb="select"] div,
+[data-baseweb="select"] [data-baseweb="icon"],
 [data-baseweb="select"] svg {
-  background: transparent !important;
-  color: #e2e8f0 !important;
   fill: #e2e8f0 !important;
+  color: #e2e8f0 !important;
+  background: transparent !important;
 }
 
-/* Number input & spinbox */
-[data-baseweb="spinner"] input,
-[data-testid="stNumberInput"] input,
-input[type="number"] {
-  background: #00122e !important;
-  color: #fff !important;
-  border: 1px solid rgba(0,255,255,.4) !important;
-  border-radius: 10px !important;
-}
-[data-baseweb="spinner"] button,
-[data-testid="stNumberInput"] button {
-  background: #001a3f !important;
-  color: #fff !important;
-  border-color: rgba(0,255,255,.3) !important;
-}
-
-/* All text inputs & textareas */
+/* ═══ 6. ALL INPUTS ═══ */
 input, textarea,
+input[type="text"], input[type="number"],
 [data-baseweb="input"] input,
+[data-baseweb="textarea"] textarea,
 .stTextInput input,
-.stTextArea textarea {
-  background: #00122e !important;
-  color: #fff !important;
+.stTextArea textarea,
+[data-testid="stNumberInput"] input {
+  background-color: #00122e !important;
+  color: #ffffff !important;
   border: 1px solid rgba(0,255,255,.4) !important;
   border-radius: 10px !important;
   caret-color: #00ffff !important;
 }
-input::placeholder, textarea::placeholder { color: rgba(255,255,255,.4) !important; }
+input::placeholder, textarea::placeholder {
+  color: rgba(255,255,255,.4) !important;
+}
 
-/* Radio buttons */
+/* Number input steppers */
+[data-testid="stNumberInput"] button,
+[data-baseweb="spinner"] button {
+  background-color: #001a3f !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(0,255,255,.3) !important;
+}
+
+/* ═══ 7. RADIO BUTTONS ═══ */
 [data-testid="stRadio"] label,
 [data-testid="stRadio"] p,
-.stRadio label p { color: #e2e8f0 !important; }
-[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p { color: #e2e8f0 !important; }
+[data-testid="stRadio"] span,
+.stRadio label p {
+  color: #e2e8f0 !important;
+}
 
-/* Expanders */
+/* ═══ 8. EXPANDERS ═══ */
 [data-testid="stExpander"], details {
   background: #00122e !important;
   border: 1px solid rgba(255,255,255,.15) !important;
   border-radius: 14px !important;
 }
-details summary, details summary * { color: #e2e8f0 !important; font-weight: 700 !important; }
-details[open] > div { background: #00122e !important; }
+details summary, details summary * {
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+}
+details > div, details[open] > div {
+  background: #00122e !important;
+}
 
-/* Containers / cards */
+/* ═══ 9. CONTAINERS / CARDS ═══ */
 div[data-testid="stVerticalBlockBorderWrapper"] {
   background: rgba(0,18,46,.75) !important;
   border: 1px solid rgba(255,255,255,.15) !important;
   border-radius: 16px !important;
 }
 
-/* Metrics */
+/* ═══ 10. METRICS ═══ */
 [data-testid="stMetric"] {
   background: rgba(0,18,46,.7) !important;
   border: 1px solid rgba(255,255,255,.12) !important;
@@ -143,7 +180,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 [data-testid="stMetricValue"] { color: #ffd700 !important; }
 [data-testid="stMetricLabel"] p { color: #94a3b8 !important; }
 
-/* Tabs */
+/* ═══ 11. TABS ═══ */
 [data-testid="stTabs"] [role="tablist"] {
   background: rgba(0,0,0,.3) !important;
   border-radius: 30px !important;
@@ -163,11 +200,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
   color: #fff !important;
   box-shadow: 0 4px 16px rgba(109,40,217,.4) !important;
 }
-[data-testid="stTabs"] [role="tabpanel"] {
-  background: transparent !important;
-}
 
-/* Chat */
+/* ═══ 12. CHAT ═══ */
 [data-testid="stChatMessage"] {
   background: rgba(0,18,46,.7) !important;
   border: 1px solid rgba(255,255,255,.12) !important;
@@ -183,7 +217,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
   color: #fff !important;
 }
 
-/* Gold buttons */
+/* ═══ 13. GOLD BUTTONS ═══ */
 .stButton > button {
   background: linear-gradient(135deg,#ffd700,#ffb900) !important;
   color: #000 !important;
@@ -198,52 +232,60 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 24px rgba(255,215,0,.6) !important;
 }
-.stButton > button p, .stButton > button span, .stButton > button div { color: #000 !important; }
-
-/* Alerts */
-[data-testid="stAlert"] { border-radius: 12px !important; }
-
-/* Spinner / loader */
-[data-testid="stSpinner"] * { color: #ffd700 !important; }
-
-/* Markdown text */
-[data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] li,
-[data-testid="stMarkdownContainer"] h1,
-[data-testid="stMarkdownContainer"] h2,
-[data-testid="stMarkdownContainer"] h3 {
-  color: #e2e8f0 !important;
+.stButton > button p, .stButton > button span, .stButton > button div {
+  color: #000 !important;
 }
 
-/* File uploader */
+/* ═══ 14. ALERTS ═══ */
+[data-testid="stAlert"] { border-radius: 12px !important; }
+
+/* ═══ 15. FILE UPLOADER ═══ */
 [data-testid="stFileUploader"] {
   background: #00122e !important;
   border: 1px dashed rgba(0,255,255,.4) !important;
   border-radius: 12px !important;
 }
 [data-testid="stFileUploader"] * { color: #e2e8f0 !important; }
-[data-testid="stFileUploaderDropzoneInstructions"] * { color: #94a3b8 !important; }
 
-/* Dividers */
-hr { border-color: rgba(255,255,255,.1) !important; }
+/* ═══ 16. MARKDOWN TEXT ═══ */
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3,
+[data-testid="stMarkdownContainer"] strong {
+  color: #e2e8f0 !important;
+}
 
-/* Hide chrome */
+/* ═══ 17. HIDE CHROME ═══ */
 #MainMenu, footer, header, .stDeployButton,
 [data-testid="stToolbar"],
 section[data-testid="stSidebar"] { display: none !important; }
 
-/* Scrollbar */
+/* ═══ 18. SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #000428; }
 ::-webkit-scrollbar-thumb { background: rgba(255,215,0,.4); border-radius: 4px; }
+</style>
 
-/* Tooltip / popover overlays */
-[data-testid="tooltipHoverTarget"] *,
-[data-testid="stTooltipContent"] * { color: #e2e8f0 !important; }
-
-/* Column gaps */
-[data-testid="column"] { background: transparent !important; }
-</style>""", unsafe_allow_html=True)
+<script>
+// JS fallback: force dark on any white-background portal divs injected after page load
+const observer = new MutationObserver(() => {
+  document.querySelectorAll('[data-baseweb="popover"], [data-baseweb="menu"], ul[role="listbox"], div[role="listbox"]').forEach(el => {
+    el.style.setProperty('background-color', '#031a3f', 'important');
+    el.style.setProperty('color', '#e2e8f0', 'important');
+    el.querySelectorAll('*').forEach(child => {
+      const bg = window.getComputedStyle(child).backgroundColor;
+      if (bg === 'rgb(255, 255, 255)' || bg === 'rgba(255, 255, 255, 1)') {
+        child.style.setProperty('background-color', '#031a3f', 'important');
+        child.style.setProperty('color', '#e2e8f0', 'important');
+      }
+    });
+  });
+});
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
+""", unsafe_allow_html=True)
 
 # ── HELPERS ───────────────────────────────────────────────────
 def get_img_b64(path):
@@ -251,18 +293,8 @@ def get_img_b64(path):
         with open(path,"rb") as f: return base64.b64encode(f.read()).decode()
     except: return None
 
-def clean(text):
-    if not text: return ""
-    return text.encode("ascii","ignore").decode("ascii").strip()
-
 def groq_openai(api_key):
     return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
-
-def fetch_models(api_key):
-    try:
-        c = groq_openai(api_key)
-        return sorted([m.id for m in c.models.list().data])
-    except: return ["llama-3.3-70b-versatile"]
 
 BEST_MODELS = ["llama-3.3-70b-versatile","llama-3.1-70b-versatile","mixtral-8x7b-32768"]
 
@@ -353,8 +385,7 @@ def grade_descriptive(questions, answers, board, cls, subject, model):
     except Exception as e: return f"Grading error: {e}"
 
 def best_model():
-    for m in BEST_MODELS:
-        return m
+    return BEST_MODELS[0]
 
 # ── HEADER ────────────────────────────────────────────────────
 logo = get_img_b64("logo.png")
@@ -373,7 +404,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── TABS ────────────────────────────────────────────────────
 tab_aya, tab_mt = st.tabs(["🤖  AyA Tutor", "📝  Mock Tests"])
 
 # ══════════════════════════════════════════════════════════════
@@ -405,7 +435,6 @@ with tab_aya:
 
     with st.expander("📝 New Problem", expanded=(len(st.session_state.aya_msgs)==0)):
         mode = st.radio("Input:", ["✏️ Type Problem","📄 Upload PDF"], horizontal=True)
-
         if "✏️" in mode:
             txt = st.text_area("Your question:", height=110, placeholder="e.g. Explain SN2 reaction mechanism with an example.")
             if st.button("🚀 Ask AyA", key="aya_txt_btn"):
@@ -414,14 +443,12 @@ with tab_aya:
                     st.rerun()
                 else: st.warning("Please type a question first.")
         else:
-            pdf = st.file_uploader("Upload PDF (first 2 pages)", type=["pdf"],
-                                    key=f"pdf_{st.session_state.aya_key}")
+            pdf = st.file_uploader("Upload PDF (first 2 pages)", type=["pdf"], key=f"pdf_{st.session_state.aya_key}")
             if st.button("🚀 Analyse PDF", key="aya_pdf_btn"):
                 if pdf:
                     try:
                         reader = PyPDF2.PdfReader(pdf)
-                        text = "".join(reader.pages[i].extract_text()[:3000]
-                                       for i in range(min(2,len(reader.pages))))
+                        text = "".join(reader.pages[i].extract_text()[:3000] for i in range(min(2,len(reader.pages))))
                         st.session_state.aya_msgs = [{"role":"user","content":f"PROBLEM from PDF:\n{text}"}]
                         st.session_state.aya_key += 1
                         st.rerun()
@@ -549,8 +576,7 @@ with tab_mt:
                     c = q["correct_answer"]
                     ok = u == c
                     st.markdown(f"**Q{q['id']}.** {q['question']}")
-                    if ok:
-                        st.success(f"✅ {u}")
+                    if ok: st.success(f"✅ {u}")
                     else:
                         st.error(f"❌ Your answer: {u}")
                         st.success(f"✅ Correct: {c}")
@@ -583,19 +609,16 @@ with tab_mt:
             qid = str(q["id"])
             m_txt = f" *({q.get('marks',1)} marks)*" if st.session_state.mt_qtype=="Descriptive" else ""
             st.markdown(f"**Q{q['id']}.** {q['question']}{m_txt}")
-
             if st.session_state.mt_qtype == "MCQ":
                 cur = st.session_state.mt_answers.get(qid)
                 opts = q["options"]
                 idx  = opts.index(cur) if cur in opts else None
-                chosen = st.radio("", opts, index=idx, key=f"q_{qid}",
-                                   label_visibility="collapsed")
+                chosen = st.radio("", opts, index=idx, key=f"q_{qid}", label_visibility="collapsed")
                 st.session_state.mt_answers[qid] = chosen
             else:
                 cur = st.session_state.mt_answers.get(qid,"")
                 ans = st.text_area("", value=cur, height=100, key=f"q_{qid}",
-                                    placeholder="Write your answer…",
-                                    label_visibility="collapsed")
+                                    placeholder="Write your answer…", label_visibility="collapsed")
                 st.session_state.mt_answers[qid] = ans
             st.divider()
 
